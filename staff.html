@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cafe Staff Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Staff Dashboard</h1>
+      <p class="muted">Manage active tables, orders, and service requests</p>
+    </div>
+    <div class="top-links">
+      <a href="index.html">Customer</a>
+      <a href="admin.html">Admin</a>
+    </div>
+  </header>
+  <div id="connectionBanner" class="connection-banner hidden" role="status" aria-live="polite">
+    <span id="connectionBannerText"></span>
+    <div class="connection-actions">
+      <button id="connectionRetryBtn" type="button" class="connection-btn hidden">Retry</button>
+      <button id="connectionDismissBtn" type="button" class="connection-chip" aria-label="Dismiss status">Dismiss</button>
+    </div>
+  </div>
+
+  <main class="page">
+    <section class="grid-two">
+      <div class="card">
+        <div class="section-head">
+          <h2>Open Orders</h2>
+          <button id="refreshStaffBtn">Refresh</button>
+        </div>
+        <div id="staffOrders"></div>
+      </div>
+      <div class="card">
+        <div class="section-head">
+          <h2>Service Requests</h2>
+          <button id="clearCompletedRequestsBtn">Clear Completed</button>
+        </div>
+        <div id="serviceRequests"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="staff.js"></script>
+</body>
+</html>

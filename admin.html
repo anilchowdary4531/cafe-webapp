@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cafe Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Admin Panel</h1>
+      <p class="muted">Manage menu items and availability</p>
+    </div>
+    <div class="top-links">
+      <a href="index.html">Customer</a>
+      <a href="staff.html">Staff</a>
+    </div>
+  </header>
+  <div id="connectionBanner" class="connection-banner hidden" role="status" aria-live="polite">
+    <span id="connectionBannerText"></span>
+    <div class="connection-actions">
+      <button id="connectionRetryBtn" type="button" class="connection-btn hidden">Retry</button>
+      <button id="connectionDismissBtn" type="button" class="connection-chip" aria-label="Dismiss status">Dismiss</button>
+    </div>
+  </div>
+
+  <main class="page">
+    <section class="card">
+      <div class="section-head">
+        <h2>User Management</h2>
+        <button id="refreshUsersBtn" type="button">Refresh Users</button>
+      </div>
+      <p id="adminAuthStatus" class="muted small">Admin login required for secure actions.</p>
+      <form id="adminLoginForm" class="form-grid">
+        <label for="adminEmail" class="sr-only">Admin email</label>
+        <input id="adminEmail" type="email" placeholder="Admin email" required />
+        <label for="adminPassword" class="sr-only">Admin password</label>
+        <input id="adminPassword" type="password" placeholder="Admin password" required />
+        <div class="actions-row">
+          <button class="primary" type="submit">Admin Login</button>
+          <button id="adminLogoutBtn" type="button">Logout</button>
+        </div>
+      </form>
+      <hr />
+      <h3>Add Staff</h3>
+      <form id="addStaffForm" class="form-grid">
+        <label for="staffEmail" class="sr-only">Staff email</label>
+        <input id="staffEmail" type="email" placeholder="Staff email" required />
+        <label for="staffPassword" class="sr-only">Temporary password</label>
+        <input id="staffPassword" type="password" placeholder="Temporary password" minlength="6" required />
+        <button class="primary" type="submit">Add Staff</button>
+      </form>
+      <div id="staffUsersList" class="detail-list"></div>
+    </section>
+
+    <section class="card" style="margin-top: 20px; padding: 18px;">
+      <h2>Restaurant</h2>
+      <p class="muted small">Manage menu items and availability.</p>
+      <section class="grid-two">
+        <div>
+          <h3>Add Menu Item</h3>
+          <form id="menuForm" class="form-grid">
+            <label for="name" class="sr-only">Item name</label>
+            <input id="name" placeholder="Item name" required />
+            <label for="category" class="sr-only">Category</label>
+            <select id="category" required>
+              <option value="Food">Food</option>
+              <option value="Snacks">Snacks</option>
+              <option value="Coffee">Coffee</option>
+              <option value="Tea">Tea</option>
+              <option value="Juices">Juices</option>
+              <option value="Ice Cream">Ice Cream</option>
+              <option value="Cigarettes">Cigarettes</option>
+            </select>
+            <label for="price" class="sr-only">Price</label>
+            <input id="price" type="number" min="0" step="0.01" placeholder="Price" required />
+            <label for="description" class="sr-only">Description</label>
+            <input id="description" placeholder="Description" />
+            <label for="imageUrl" class="sr-only">Image URL</label>
+            <input id="imageUrl" type="url" placeholder="Image URL (https://...)" />
+            <div id="menuImagePreview" class="admin-image-preview hidden"></div>
+            <button class="primary" type="submit">Save Item</button>
+          </form>
+        </div>
+        <div>
+          <div class="section-head">
+            <h3>Menu Items</h3>
+            <button id="resetMenuBtn" type="button">Reset Demo Menu</button>
+          </div>
+          <div id="adminMenuList"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

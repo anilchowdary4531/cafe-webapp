@@ -1,0 +1,12 @@
+node_modules/
+android/
+ios/
+www/*
+!www/.gitkeep
+.env
+.env.local
+signing.properties
+*.jks
+*.keystore
+
+

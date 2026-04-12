@@ -1,0 +1,83 @@
+package com.cafe.auth.security;
+
+import com.cafe.AppProperties;
+import java.util.Arrays;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+@Configuration
+@EnableMethodSecurity(prePostEnabled = true)
+public class SecurityConfig {
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final AppProperties appProperties;
+
+  public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, AppProperties appProperties) {
+    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    this.appProperties = appProperties;
+  }
+
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.csrf(csrf -> csrf.disable())
+        .cors(Customizer.withDefaults())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(
+                "/health",
+                "/actuator/health",
+                "/api/auth/**",
+                "/api/menu",
+                "/api/orders",
+                "/api/orders/**",
+                "/api/requests",
+                "/api/requests/**",
+                "/api/admin/tax-slabs/active"
+            ).permitAll()
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            .anyRequest().authenticated())
+        .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+    return http.build();
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(Arrays.asList(appProperties.getCorsOrigin().split(",")));
+    config.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+    config.setAllowedHeaders(Arrays.asList("*"));
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  /** Prevent Spring Boot from auto-registering the filter as a plain servlet filter.
+   *  It is already added to the Spring Security filter chain above. */
+  @Bean
+  public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(
+      JwtAuthenticationFilter filter) {
+    FilterRegistrationBean<JwtAuthenticationFilter> reg = new FilterRegistrationBean<>(filter);
+    reg.setEnabled(false);
+    return reg;
+  }
+}
+
+
+
+
+

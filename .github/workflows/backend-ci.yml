@@ -1,0 +1,59 @@
+name: Build & Test Spring Boot Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend-spring/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend-spring/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: cafe_webapp
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        working-directory: backend-spring
+        run: mvn -B package
+        env:
+          DATABASE_URL: jdbc:postgresql://localhost:5432/cafe_webapp
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          JWT_SECRET: ci-test-secret-minimum-32-characters-long
+          CORS_ORIGIN: http://localhost:8000
+          OTP_PROVIDER: demo
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cafe-backend-jar
+          path: backend-spring/target/*.jar
+          retention-days: 7
+

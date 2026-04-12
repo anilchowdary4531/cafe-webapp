@@ -1,0 +1,10 @@
+{
+  "appId": "com.sunsetcafe.qrapp",
+  "appName": "Sunset Cafe",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
+

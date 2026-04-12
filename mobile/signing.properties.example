@@ -1,0 +1,7 @@
+# Copy to mobile/signing.properties and update values before running a signed release build.
+# You can use absolute paths or paths relative to the mobile/ directory.
+storeFile=sunset-cafe-upload-key.jks
+storePassword=CHANGE_ME
+keyAlias=sunset-cafe
+keyPassword=CHANGE_ME
+

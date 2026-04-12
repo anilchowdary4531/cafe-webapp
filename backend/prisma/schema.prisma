@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  received
+  preparing
+  served
+}
+
+enum PaymentStatus {
+  unpaid
+  paid
+}
+
+enum RequestStatus {
+  pending
+  completed
+}
+
+model MenuItem {
+  id          Int       @id @default(autoincrement())
+  name        String
+  category    String
+  price       Decimal   @db.Decimal(10, 2)
+  description String?
+  restricted  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id                  String      @id @default(cuid())
+  tableLabel          String
+  note                String?
+  status              OrderStatus @default(received)
+  paymentStatus       PaymentStatus @default(unpaid)
+  subtotal            Decimal     @db.Decimal(10, 2)
+  tax                 Decimal     @db.Decimal(10, 2)
+  total               Decimal     @db.Decimal(10, 2)
+  customerPhone       String
+  customerPhoneMasked String
+  customerEmail       String?
+  phoneVerifiedAt     DateTime?
+  paidAt              DateTime?
+  completionEmailSentAt DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  items               OrderItem[]
+
+  @@index([tableLabel, createdAt(sort: Desc)])
+}
+
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  orderId    String
+  menuItemId Int?
+  name       String
+  quantity   Int
+  unitPrice  Decimal? @db.Decimal(10, 2)
+  restricted Boolean  @default(false)
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+}
+
+model ServiceRequest {
+  id                  String        @id @default(cuid())
+  tableLabel          String
+  type                String
+  note                String
+  status              RequestStatus @default(pending)
+  items               Json?
+  customerPhone       String?
+  customerPhoneMasked String?
+  phoneVerifiedAt     DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([tableLabel, createdAt(sort: Desc)])
+}
+
+model CustomerSession {
+  id         String   @id @default(cuid())
+  tableLabel String   @unique
+  phone      String
+  verifiedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model OtpChallenge {
+  id            String   @id @default(cuid())
+  tableLabel    String   @unique
+  phone         String
+  code          String
+  attempts      Int      @default(0)
+  expiresAt     DateTime
+  cooldownUntil DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+

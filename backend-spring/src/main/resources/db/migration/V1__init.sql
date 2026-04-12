@@ -1,0 +1,44 @@
+CREATE TABLE IF NOT EXISTS app_user (
+  id BIGSERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(32) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS refresh_token (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+  token VARCHAR(512) NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  revoked BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS customer_session (
+  id BIGSERIAL PRIMARY KEY,
+  table_label VARCHAR(64) UNIQUE NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  verified_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS otp_challenge (
+  id BIGSERIAL PRIMARY KEY,
+  table_label VARCHAR(64) UNIQUE NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  code VARCHAR(8) NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMP NOT NULL,
+  cooldown_until TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO app_user (email, password_hash, role)
+VALUES
+  ('admin@sunsetcafe.local', '$2a$10$TWh4UXM5fA8ixNaw9f6W7uovqRs36A2v9QY9/VYRWxqsD0f5NytA6', 'ADMIN'),
+  ('staff@sunsetcafe.local', '$2a$10$TWh4UXM5fA8ixNaw9f6W7uovqRs36A2v9QY9/VYRWxqsD0f5NytA6', 'STAFF')
+ON CONFLICT (email) DO NOTHING;
+
