@@ -41,3 +41,6 @@ mobile/android/.gradle/
 *.log
 logs/
 
+# ===== Generated secrets (never commit) =====
+scripts/keystore-base64.txt
+
