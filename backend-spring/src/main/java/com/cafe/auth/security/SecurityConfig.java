@@ -34,6 +34,9 @@ public class SecurityConfig {
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
+                "/",
+                "/favicon.ico",
+                "/error",
                 "/health",
                 "/actuator/health",
                 "/api/auth/**",
@@ -76,8 +79,3 @@ public class SecurityConfig {
     return reg;
   }
 }
-
-
-
-
-

@@ -818,43 +818,55 @@ async function bootstrapCustomerApp() {
     const restrictedItems = cart.filter((x) => x.restricted);
     const maskedPhone = maskPhoneNumber(customerSession.phone);
 
-    if (regularItems.length) {
-      await createOrderWithFallback({
-        table: activeTable,
-        note: orderNote.value.trim(),
-        customerPhone: customerSession.phone,
-        customerPhoneMasked: maskedPhone,
-        customerEmail: profileState.email || undefined,
-        phoneVerifiedAt: customerSession.verifiedAt || now.toISOString(),
-        items: regularItems.map((item) => ({
-          menuItemId: typeof item.id === 'number' ? item.id : undefined,
-          name: item.name,
-          qty: item.qty,
-          price: Number(item.price || 0),
-          restricted: Boolean(item.restricted)
-        }))
-      });
-    }
+    let orderSyncedToApi = true;
+    let requestSyncedToApi = true;
 
-    if (restrictedItems.length) {
-      await createRequestWithFallback({
-        table: activeTable,
-        type: 'Cigarette Request',
-        note: restrictedItems.length === 1
-          ? `Customer requested ${restrictedItems[0].name}. Staff approval and age verification required.`
-          : 'Customer requested restricted items. Staff approval and age verification required.',
-        items: restrictedItems.map(({ id, name, qty }) => ({ id, name, qty })),
-        customerPhone: customerSession.phone,
-        customerPhoneMasked: maskedPhone,
-        phoneVerifiedAt: customerSession.verifiedAt || now.toISOString()
-      });
-    }
+    if (regularItems.length) {
+      orderSyncedToApi = await createOrderWithFallback({
+         table: activeTable,
+         note: orderNote.value.trim(),
+         customerPhone: customerSession.phone,
+         customerPhoneMasked: maskedPhone,
+         customerEmail: profileState.email || undefined,
+         phoneVerifiedAt: customerSession.verifiedAt || now.toISOString(),
+         items: regularItems.map((item) => ({
+           menuItemId: typeof item.id === 'number' ? item.id : undefined,
+           name: item.name,
+           qty: item.qty,
+           price: Number(item.price || 0),
+           restricted: Boolean(item.restricted)
+         }))
+       });
+     }
+
+     if (restrictedItems.length) {
+       requestSyncedToApi = await createRequestWithFallback({
+         table: activeTable,
+         type: 'Cigarette Request',
+         note: restrictedItems.length === 1
+           ? `Customer requested ${restrictedItems[0].name}. Staff approval and age verification required.`
+           : 'Customer requested restricted items. Staff approval and age verification required.',
+         items: restrictedItems.map(({ id, name, qty }) => ({ id, name, qty })),
+         customerPhone: customerSession.phone,
+         customerPhoneMasked: maskedPhone,
+         phoneVerifiedAt: customerSession.verifiedAt || now.toISOString()
+       });
+     }
 
     cart = [];
     orderNote.value = '';
     renderCart();
     renderMenu();
-    alert('Order placed successfully.');
+    if (orderSyncedToApi && requestSyncedToApi) {
+      alert('Order placed successfully.');
+    } else {
+      console.warn('[CafeApp][finalizeOrder] Fallback mode was used for this table order.', {
+        table: activeTable,
+        orderSyncedToApi,
+        requestSyncedToApi
+      });
+      alert('Order saved in local fallback mode. Please check connection and retry sync.');
+    }
     await renderOrdersForTable();
     updateCustomerAuthStatus();
   }
@@ -925,17 +937,19 @@ async function bootstrapCustomerApp() {
   }
 
   loadTableBtn.onclick = async () => {
-    activeTable = tableSelect.value;
-    activeTableText.textContent = activeTable;
-    orderingSection.classList.remove('hidden');
-    await hydrateCustomerSessionFromApi(activeTable);
-    const hydratedSession = getCustomerSession();
-    if (hydratedSession?.phone) {
-      syncProfileFromVerifiedPhone(hydratedSession.phone);
-    }
-    updateCustomerAuthStatus();
-    await renderOrdersForTable();
-    window.scrollTo({ top: document.body.scrollHeight * 0.1, behavior: 'smooth' });
+     activeTable = tableSelect.value;
+    console.info('[CafeApp][table] Loading table data', { table: activeTable });
+     activeTableText.textContent = activeTable;
+     orderingSection.classList.remove('hidden');
+     await hydrateCustomerSessionFromApi(activeTable);
+     const hydratedSession = getCustomerSession();
+     if (hydratedSession?.phone) {
+       syncProfileFromVerifiedPhone(hydratedSession.phone);
+     }
+     updateCustomerAuthStatus();
+     await renderOrdersForTable();
+    console.info('[CafeApp][table] Table data loaded', { table: activeTable });
+     window.scrollTo({ top: document.body.scrollHeight * 0.1, behavior: 'smooth' });
   };
   searchInput.oninput = renderMenu;
   placeOrderBtn.onclick = () => { void placeOrder(); };

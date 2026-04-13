@@ -8,6 +8,12 @@ const STORAGE_KEYS = {
 };
 
 const API_BASE_URL = window.CAFE_API_BASE_URL || 'http://localhost:4000';
+
+function logApiIssue(scope, error, meta = {}) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`[CafeApp][${scope}] ${message}`, meta);
+}
+
 const connectionListeners = new Set();
 const connectionStatus = {
   online: navigator.onLine,
@@ -63,6 +69,7 @@ async function requestJson(path, options = {}, requiresAdmin = false) {
     response = await fetch(`${API_BASE_URL}${path}`, requestOptions);
   } catch (error) {
     setApiReachable(false);
+    logApiIssue('request', error, { path, baseUrl: API_BASE_URL, method: requestOptions.method || 'GET' });
     throw error;
   }
 
@@ -72,6 +79,7 @@ async function requestJson(path, options = {}, requiresAdmin = false) {
 
   if (!response.ok) {
     const errorMessage = body?.error || `Request failed (${response.status})`;
+    logApiIssue('response', new Error(errorMessage), { path, status: response.status, method: requestOptions.method || 'GET' });
     throw new Error(errorMessage);
   }
 
@@ -283,6 +291,7 @@ async function hydrateOrdersFromApi(table) {
     saveOrders(normalizedOrders);
     return normalizedOrders;
   } catch (_error) {
+    logApiIssue('hydrateOrdersFromApi', _error, { table });
     return loadOrders();
   }
 }
@@ -299,6 +308,7 @@ async function createOrderWithFallback(payload) {
     saveOrders(existing);
     return true;
   } catch (_error) {
+    logApiIssue('createOrderWithFallback', _error, { table: payload.table, itemCount: payload.items?.length || 0 });
     const now = new Date();
     const regularItems = payload.items.filter((item) => !item.restricted);
     const subtotal = regularItems.reduce((sum, item) => sum + (item.price || 0) * item.qty, 0);
@@ -410,6 +420,7 @@ async function createRequestWithFallback(payload) {
     saveRequests(existing);
     return true;
   } catch (_error) {
+    logApiIssue('createRequestWithFallback', _error, { table: payload.table, type: payload.type });
     const existing = loadRequests();
     existing.unshift({
       id: Date.now(),
