@@ -33,13 +33,21 @@ fi
 echo "======================================================"
 echo ""
 
-JAVA_HOME=$(/usr/libexec/java_home -v 17 2>/dev/null || /usr/libexec/java_home -v 21 2>/dev/null)
+JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || true)
 export JAVA_HOME
 if [ -z "${JAVA_HOME:-}" ]; then
-  echo "❌ Could not resolve JAVA_HOME. Install JDK 17 or JDK 21 first."
+  echo "❌ Could not resolve JAVA_HOME for JDK 21."
+  echo "   This Android build uses Java source level 21 (Capacitor/AGP config)."
+  echo "   Install JDK 21 and retry."
   exit 1
 fi
 echo "▶ JAVA_HOME: $JAVA_HOME"
+
+JAVA_MAJOR="$($JAVA_HOME/bin/java -version 2>&1 | awk -F '[\".]' '/version/ {print $2}')"
+if [ "${JAVA_MAJOR:-0}" -lt 21 ]; then
+  echo "❌ Active Java is ${JAVA_MAJOR}, but build requires Java 21."
+  exit 1
+fi
 
 cd "$MOBILE"
 
@@ -85,4 +93,3 @@ echo " Upload to Play Console:"
 echo "   1. https://play.google.com/console"
 echo "   2. Your app → Production → Create release → Upload AAB"
 echo "======================================================"
-
