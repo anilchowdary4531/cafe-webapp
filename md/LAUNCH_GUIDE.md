@@ -282,4 +282,8 @@ Once testing passes:
 | Website | `play-site/index.html` |
 | Privacy policy | `play-site/privacy-policy.html` |
 
-
+curl -I https://anilchowdary4531.github.io/sunset-cafe-site/
+curl -I https://anilchowdary4531.github.io/sunset-cafe-site/staff.html
+curl -I https://anilchowdary4531.github.io/sunset-cafe-site/admin.html
+curl -I https://anilchowdary4531.github.io/sunset-cafe-site/privacy-policy.html
+curl -I https://YOUR_RAILWAY_URL.up.railway.app/health
