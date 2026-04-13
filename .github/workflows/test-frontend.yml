@@ -1,0 +1,67 @@
+name: Test Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*.html'
+      - '*.js'
+      - '*.css'
+      - 'mobile/www/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '*.html'
+      - '*.js'
+      - '*.css'
+      - 'mobile/www/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate HTML and CSS
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          html_files = sorted(Path('.').glob('*.html'))
+          html_files += sorted(Path('play-site').glob('*.html'))
+          html_files += sorted(Path('mobile/www').glob('*.html'))
+
+          css_files = sorted(Path('.').glob('*.css'))
+          css_files += sorted(Path('mobile/www').glob('*.css'))
+
+          errors = []
+
+          for path in html_files:
+              text = path.read_text(encoding='utf-8')
+              print(f"Checking HTML: {path}")
+              if '<html' not in text.lower():
+                  errors.append(f"{path}: missing <html> tag")
+              if '</html>' not in text.lower():
+                  errors.append(f"{path}: missing </html> tag")
+
+          empty_css_pattern = re.compile(r':\s*;')
+          for path in css_files:
+              text = path.read_text(encoding='utf-8')
+              print(f"Checking CSS: {path}")
+              if empty_css_pattern.search(text):
+                  errors.append(f"{path}: found empty CSS property value")
+
+          if errors:
+              print('\n'.join(errors), file=sys.stderr)
+              sys.exit(1)
+
+          print('Frontend validation completed successfully.')
+          PY
+
+      - name: Final status
+        run: |
+          echo "✓ Frontend validation passed"
+

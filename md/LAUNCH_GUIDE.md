@@ -47,14 +47,14 @@ Then enable Pages:
 
 Go to: https://github.com/anilchowdary4531/cafe-webapp/settings/secrets/actions
 
-Add these 4 secrets:
+Add these secrets:
 
 | Secret Name | Value |
 |------------|-------|
 | `ANDROID_KEYSTORE_BASE64` | *(contents of `scripts/keystore-base64.txt`)* |
 | `ANDROID_STORE_PASSWORD` | `<your keystore password>` |
-| `ANDROID_KEY_ALIAS` | `sunset-cafe` |
 | `ANDROID_KEY_PASSWORD` | `<your key password>` |
+| `MOBILE_API_BASE_URL` | `https://YOUR_RAILWAY_URL.up.railway.app` *(add after Step 5)* |
 
 To get the keystore base64 value:
 ```bash
@@ -62,8 +62,6 @@ cat /Users/anilkumarthammineni/Downloads/cafe-webapp/scripts/keystore-base64.txt
 ```
 Copy the entire output → paste as the `ANDROID_KEYSTORE_BASE64` secret value.
 
-Also add:
-| `MOBILE_API_BASE_URL` | `https://YOUR_RAILWAY_URL.up.railway.app` *(add after Step 5)* |
 
 ---
 

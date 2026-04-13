@@ -317,7 +317,7 @@ Once approved, your app is live on Google Play:
 | Phase | Time | Who |
 |-------|------|-----|
 | 1. Publish website | 10 min | You |
-| 2. Update docs | 5 min | Me (when you send URLs) |
+| 2. Update docs | 5 min | You |
 | 3. Deploy backend | 30-120 min | You |
 | 4. Build signed app | 5 min | You |
 | 5. Create Play account | 15 min + 48h | You |
@@ -332,11 +332,11 @@ Once approved, your app is live on Google Play:
 
 ## What to do right now
 
-1. Open `play-site/DEPLOY.md`
-2. Follow steps 1-4 to publish website
-3. Come back with your GitHub Pages URLs
-4. I'll update the docs
-5. Then proceed to deploy your backend
+1. Push both repositories with `./scripts/push-to-github.sh anilchowdary4531`
+2. Enable GitHub Pages for `sunset-cafe-site`
+3. Deploy `backend-spring/` on Railway and get the HTTPS API URL
+4. Rebuild AAB with production API: `./scripts/rebuild-aab.sh https://YOUR_RAILWAY_URL.up.railway.app`
+5. Complete Play Console listing + upload `app-release.aab`
 
 **Ready?**
 

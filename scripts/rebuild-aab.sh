@@ -33,19 +33,23 @@ fi
 echo "======================================================"
 echo ""
 
-JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || true)
+# Android build supports Java 17+; prefer 21 if installed.
+resolve_java_home() {
+  /usr/libexec/java_home -v 21 2>/dev/null || /usr/libexec/java_home -v 17 2>/dev/null || true
+}
+
+JAVA_HOME=$(resolve_java_home)
 export JAVA_HOME
 if [ -z "${JAVA_HOME:-}" ]; then
-  echo "❌ Could not resolve JAVA_HOME for JDK 21."
-  echo "   This Android build uses Java source level 21 (Capacitor/AGP config)."
-  echo "   Install JDK 21 and retry."
+  echo "❌ Could not resolve JAVA_HOME for JDK 17 or newer."
+  echo "   Install JDK 17+ and retry."
   exit 1
 fi
 echo "▶ JAVA_HOME: $JAVA_HOME"
 
 JAVA_MAJOR="$($JAVA_HOME/bin/java -version 2>&1 | awk -F '[\".]' '/version/ {print $2}')"
-if [ "${JAVA_MAJOR:-0}" -lt 21 ]; then
-  echo "❌ Active Java is ${JAVA_MAJOR}, but build requires Java 21."
+if [ "${JAVA_MAJOR:-0}" -lt 17 ]; then
+  echo "❌ Active Java is ${JAVA_MAJOR}, but build requires Java 17 or newer."
   exit 1
 fi
 
