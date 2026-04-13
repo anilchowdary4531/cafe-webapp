@@ -39,11 +39,26 @@ jobs:
         working-directory: mobile
         run: npm ci
 
+      - name: Resolve mobile API URL
+        run: |
+          API_URL="${{ github.event.inputs.api_url || secrets.MOBILE_API_BASE_URL }}"
+          if [ -z "$API_URL" ]; then
+            echo "MOBILE_API_BASE_URL is required for Android release builds." >&2
+            exit 1
+          fi
+          case "$API_URL" in
+            *localhost*|*127.0.0.1*)
+              echo "Release builds cannot use localhost API URLs: $API_URL" >&2
+              exit 1
+              ;;
+          esac
+          echo "MOBILE_API_BASE_URL=$API_URL" >> "$GITHUB_ENV"
+
       - name: Sync Capacitor web assets
         working-directory: mobile
         run: npm run cap:sync
         env:
-          MOBILE_API_BASE_URL: ${{ github.event.inputs.api_url || secrets.MOBILE_API_BASE_URL || 'http://localhost:4100' }}
+          MOBILE_API_BASE_URL: ${{ env.MOBILE_API_BASE_URL }}
 
       - name: Write signing.properties
         working-directory: mobile

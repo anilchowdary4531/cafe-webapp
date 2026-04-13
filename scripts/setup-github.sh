@@ -3,13 +3,32 @@
 # Usage: ./setup-github.sh YOUR_GITHUB_USERNAME
 # Example: ./setup-github.sh anilchowdary4531
 
-set -e
+set -euo pipefail
 
 GITHUB_USERNAME="${1:-anilchowdary4531}"
 MAIN_REPO="cafe-webapp"
 SITE_REPO="sunset-cafe-site"
 
-ROOT="/Users/anilkumarthammineni/Downloads/cafe-webapp"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "❌ Required command not found: $1"
+    exit 1
+  }
+}
+
+require_command git
+
+PLAY_SITE_SOURCE="$ROOT/play-site"
+PLAY_SITE_TEMP="$(mktemp -d)"
+
+cleanup() {
+  rm -rf "$PLAY_SITE_TEMP"
+}
+
+trap cleanup EXIT
 
 echo ""
 echo "======================================================"
@@ -24,17 +43,27 @@ cd "$ROOT"
 
 if [ ! -d ".git" ]; then
   git init
-  git checkout -b main
+  git checkout -B main
   echo "  ✅ Git initialized"
 else
   echo "  ℹ️  Git already initialized"
 fi
 
-git add -A
-git commit -m "Initial commit: Sunset Cafe full stack app" 2>/dev/null || \
-  git commit --allow-empty -m "Initial commit: Sunset Cafe full stack app"
+if ! git config user.email >/dev/null; then
+  git config user.email "anilchowdarya8@gmail.com"
+fi
 
-echo "  ✅ Changes committed"
+if ! git config user.name >/dev/null; then
+  git config user.name "Anil Chowdary"
+fi
+
+git add -A
+if ! git diff --cached --quiet; then
+  git commit -m "Initial commit: Sunset Cafe full stack app"
+  echo "  ✅ Changes committed"
+else
+  echo "  ℹ️  No new changes to commit"
+fi
 
 echo ""
 echo "▶ Step 2: Create GitHub repos (do this manually if not done):"
@@ -52,27 +81,33 @@ fi
 # ── 2. Push main repo ────────────────────────────────────────────────────────
 echo ""
 echo "▶ Step 3: Pushing main repo to GitHub..."
-git remote remove origin 2>/dev/null || true
-git remote add origin "https://github.com/$GITHUB_USERNAME/$MAIN_REPO.git"
+if git remote get-url origin >/dev/null 2>&1; then
+  git remote set-url origin "git@github.com:$GITHUB_USERNAME/$MAIN_REPO.git"
+else
+  git remote add origin "git@github.com:$GITHUB_USERNAME/$MAIN_REPO.git"
+fi
 git push -u origin main
 echo "  ✅ Main repo pushed: https://github.com/$GITHUB_USERNAME/$MAIN_REPO"
 
 # ── 3. Push play-site to separate repo ──────────────────────────────────────
 echo ""
 echo "▶ Step 4: Publishing play-site to GitHub Pages..."
-cd "$ROOT/play-site"
+cp -R "$PLAY_SITE_SOURCE/." "$PLAY_SITE_TEMP/"
+cd "$PLAY_SITE_TEMP"
 
-if [ ! -d ".git" ]; then
-  git init
-  git checkout -b main
-fi
+git init
+git checkout -B main
+git config user.email "anilchowdarya8@gmail.com"
+git config user.name "Anil Chowdary"
 
 git add -A
-git commit -m "Add Sunset Cafe website and privacy policy" 2>/dev/null || \
-  git commit --allow-empty -m "Update site"
+git commit -m "Add Sunset Cafe website and privacy policy"
 
-git remote remove origin 2>/dev/null || true
-git remote add origin "https://github.com/$GITHUB_USERNAME/$SITE_REPO.git"
+if git remote get-url origin >/dev/null 2>&1; then
+  git remote set-url origin "git@github.com:$GITHUB_USERNAME/$SITE_REPO.git"
+else
+  git remote add origin "git@github.com:$GITHUB_USERNAME/$SITE_REPO.git"
+fi
 git push -u origin main --force
 echo "  ✅ Site pushed: https://github.com/$GITHUB_USERNAME/$SITE_REPO"
 

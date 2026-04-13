@@ -36,6 +36,7 @@ mobile/android/.gradle/
 .idea/
 *.iml
 .vscode/
+play-site/.git/
 
 # ===== Logs =====
 *.log

@@ -21,9 +21,7 @@ Open Terminal and run:
 
 ```bash
 cd /Users/anilkumarthammineni/Downloads/cafe-webapp
-
-git remote add origin https://github.com/anilchowdary4531/cafe-webapp.git
-git push -u origin main
+./scripts/push-to-github.sh anilchowdary4531
 ```
 
 ✅ Your full app code is now on GitHub.
@@ -32,16 +30,7 @@ git push -u origin main
 
 ## STEP 3 — Publish Website to GitHub Pages
 
-```bash
-cd /Users/anilkumarthammineni/Downloads/cafe-webapp/play-site
-
-git init
-git checkout -b main
-git add .
-git commit -m "Add Sunset Cafe website and privacy policy"
-git remote add origin https://github.com/anilchowdary4531/sunset-cafe-site.git
-git push -u origin main
-```
+The same script above also publishes `play-site/` to the public `sunset-cafe-site` repository.
 
 Then enable Pages:
 1. Go to: https://github.com/anilchowdary4531/sunset-cafe-site/settings/pages
@@ -63,9 +52,9 @@ Add these 4 secrets:
 | Secret Name | Value |
 |------------|-------|
 | `ANDROID_KEYSTORE_BASE64` | *(contents of `scripts/keystore-base64.txt`)* |
-| `ANDROID_STORE_PASSWORD` | `sU9dXuwMY0WADnS1VthBPreC` |
+| `ANDROID_STORE_PASSWORD` | `<your keystore password>` |
 | `ANDROID_KEY_ALIAS` | `sunset-cafe` |
-| `ANDROID_KEY_PASSWORD` | `sU9dXuwMY0WADnS1VthBPreC` |
+| `ANDROID_KEY_PASSWORD` | `<your key password>` |
 
 To get the keystore base64 value:
 ```bash
@@ -120,8 +109,8 @@ openssl rand -hex 32
 ### E. Get Your Railway URL
 After deploy completes:
 - Railway gives you a URL like: `https://cafe-webapp-production-xxxx.up.railway.app`
-- Test it: `curl https://YOUR_URL.up.railway.app/actuator/health`
-- Should return: `{"status":"UP"}`
+- Test it: `curl https://YOUR_URL.up.railway.app/health`
+- Should return: `{"status":"ok"}`
 
 ✅ Backend is live!
 
@@ -227,10 +216,12 @@ Declare:
 ### App Access
 Instructions for reviewer:
 ```
-Customer: Enter any phone number → OTP: 123456 (demo mode)
-Staff:    Email: staff@sunsetcafe.local → OTP: 123456
-Admin:    Email: anilchowdarya8@gmail.com → OTP: 123456
+Customer: Demo test account / flow (share temporary credentials at submission time)
+Staff:    Temporary reviewer account (least-privilege)
+Admin:    Temporary reviewer account (least-privilege)
 ```
+
+Use temporary credentials only for review and rotate/remove them after release.
 
 ---
 
@@ -292,4 +283,5 @@ Once testing passes:
 | Keystore base64 | `scripts/keystore-base64.txt` (for GitHub secret) |
 | Website | `play-site/index.html` |
 | Privacy policy | `play-site/privacy-policy.html` |
+
 

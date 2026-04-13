@@ -100,6 +100,11 @@ async function main() {
   await copyWebAssets(configContent);
   console.log('Mobile web assets synced to:', webDir);
   console.log('Mobile API base URL:', apiBaseUrl);
+
+  if (/localhost|127\.0\.0\.1/.test(apiBaseUrl)) {
+    console.warn('WARNING: mobile build is using a local API URL.');
+    console.warn('Set MOBILE_API_BASE_URL in mobile/.env or pass it inline before Play Store / production builds.');
+  }
 }
 
 main().catch((error) => {

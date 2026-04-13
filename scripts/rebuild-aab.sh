@@ -3,12 +3,24 @@
 # Usage: ./scripts/rebuild-aab.sh https://your-railway-url.up.railway.app
 # If no URL given, uses the existing config (localhost)
 
-set -e
+set -euo pipefail
 
 API_URL="${1:-}"
-ROOT="/Users/anilkumarthammineni/Downloads/cafe-webapp"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 MOBILE="$ROOT/mobile"
 AAB="$MOBILE/android/app/build/outputs/bundle/release/app-release.aab"
+CONFIG_FILE="$MOBILE/www/config.js"
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "❌ Required command not found: $1"
+    exit 1
+  }
+}
+
+require_command npm
+require_command jarsigner
 
 echo ""
 echo "======================================================"
@@ -16,12 +28,17 @@ echo " Sunset Cafe — Android Release Builder"
 if [ -n "$API_URL" ]; then
   echo " API URL: $API_URL"
 else
-  echo " API URL: (using existing config — localhost)"
+  echo " API URL: (using current mobile configuration)"
 fi
 echo "======================================================"
 echo ""
 
-export JAVA_HOME=$(/usr/libexec/java_home -v 17 2>/dev/null || /usr/libexec/java_home -v 21 2>/dev/null)
+JAVA_HOME=$(/usr/libexec/java_home -v 17 2>/dev/null || /usr/libexec/java_home -v 21 2>/dev/null)
+export JAVA_HOME
+if [ -z "${JAVA_HOME:-}" ]; then
+  echo "❌ Could not resolve JAVA_HOME. Install JDK 17 or JDK 21 first."
+  exit 1
+fi
 echo "▶ JAVA_HOME: $JAVA_HOME"
 
 cd "$MOBILE"
@@ -33,11 +50,24 @@ if [ -n "$API_URL" ]; then
 else
   npm run cap:sync
 fi
+
+if [ -f "$CONFIG_FILE" ] && grep -q "localhost:4100" "$CONFIG_FILE"; then
+  echo "⚠️  Warning: mobile build is still pointing to localhost:4100."
+  echo "   For Play Store / production builds, rerun with your live backend URL:"
+  echo "   ./scripts/rebuild-aab.sh https://YOUR_RAILWAY_URL.up.railway.app"
+fi
+
 echo "  ✅ Sync complete"
 
 echo ""
 echo "▶ Step 2: Building release AAB..."
 npm run android:bundle:release
+
+if [ ! -f "$AAB" ]; then
+  echo "❌ Release AAB was not generated: $AAB"
+  exit 1
+fi
+
 echo "  ✅ Build complete"
 
 echo ""

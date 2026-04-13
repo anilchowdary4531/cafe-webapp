@@ -33,11 +33,11 @@ Copy these URLs. You'll need them next.
 
 ---
 
-## PHASE 2: Update Your Docs (I will do this once you send URLs)
+## PHASE 2: Update Your Docs
 
 **Timeline:** ~5 minutes
 
-Once you have your live URLs from Phase 1, send them to me and I will update:
+Once you have your live URLs from Phase 1, update:
 
 - `md/mobile/PLAY_STORE_LISTING_TEMPLATE.md`
 - `md/mobile/PLAY_CONSOLE_SUBMISSION_CHECKLIST.md`
@@ -186,9 +186,9 @@ If your app requires reviewer test access:
    ```
    Test Login Instructions:
    
-   Customer: Scan QR or use phone number +91-XXXXXXXXXX, OTP: 123456
-   Staff: Email: staff@sunsetcafe.local, OTP: 123456
-   Admin: Email: anilchowdarya8@gmail.com, OTP: 123456
+   Customer: Temporary test credentials (do not use production customer data)
+   Staff: Temporary reviewer account with staff role
+   Admin: Temporary reviewer account with admin role
    ```
 
 ### Data safety
@@ -339,4 +339,5 @@ Once approved, your app is live on Google Play:
 5. Then proceed to deploy your backend
 
 **Ready?**
+
 
