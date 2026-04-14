@@ -70,7 +70,7 @@
           <div id="menuGrid" class="menu-grid"></div>
         </div>
 
-        <aside class="cart card">
+        <aside id="cartPanel" class="cart card">
           <h3>Your Cart</h3>
           <div id="cartItems" class="cart-items"></div>
           <div class="bill-summary">
@@ -94,6 +94,36 @@
           <button id="closeOrdersModal">Close</button>
         </div>
         <div id="ordersList"></div>
+      </div>
+    </section>
+
+    <section id="mobileCartModal" class="modal cart-quick-modal hidden" aria-label="Cart preview" aria-live="polite">
+      <div class="modal-card card cart-quick-card">
+        <div class="modal-head">
+          <h3>Your Cart</h3>
+          <button id="closeMobileCartModalBtn" type="button">Close</button>
+        </div>
+        <p id="cartAddBlinkMessage" class="cart-add-blink hidden">Added to cart</p>
+        <div class="cart-quick-grid">
+          <section class="cart-quick-pane">
+            <h4>Items</h4>
+            <div id="mobileCartItems" class="cart-quick-scroll"></div>
+          </section>
+          <section class="cart-quick-pane">
+            <h4>Summary</h4>
+            <div class="cart-quick-scroll">
+              <div class="bill-summary">
+                <div><span>Subtotal</span><strong id="mobileSubtotal">Rs 0.00</strong></div>
+                <div><span>Tax (5%)</span><strong id="mobileTax">Rs 0.00</strong></div>
+                <div class="grand"><span>Total</span><strong id="mobileTotal">Rs 0.00</strong></div>
+              </div>
+              <div class="actions-row">
+                <button id="mobileViewCartBtn" type="button">View Cart Section</button>
+                <button id="mobilePlaceOrderBtn" type="button" class="primary">Place Order</button>
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
     </section>
 

@@ -59,6 +59,16 @@ async function bootstrapCustomerApp() {
   const profilePreviewAvatar = document.getElementById('profilePreviewAvatar');
   const profileTitle = document.getElementById('profileTitle');
   const resetProfileBtn = document.getElementById('resetProfileBtn');
+  const cartPanel = document.getElementById('cartPanel');
+  const mobileCartModal = document.getElementById('mobileCartModal');
+  const closeMobileCartModalBtn = document.getElementById('closeMobileCartModalBtn');
+  const cartAddBlinkMessage = document.getElementById('cartAddBlinkMessage');
+  const mobileCartItems = document.getElementById('mobileCartItems');
+  const mobileSubtotal = document.getElementById('mobileSubtotal');
+  const mobileTax = document.getElementById('mobileTax');
+  const mobileTotal = document.getElementById('mobileTotal');
+  const mobileViewCartBtn = document.getElementById('mobileViewCartBtn');
+  const mobilePlaceOrderBtn = document.getElementById('mobilePlaceOrderBtn');
 
   const OTP_EXPIRY_MS = 5 * 60 * 1000;
   const OTP_RESEND_COOLDOWN_MS = 30 * 1000;
@@ -159,6 +169,49 @@ async function bootstrapCustomerApp() {
   function closeProfileDrawer() {
     if (!profileDrawer) return;
     profileDrawer.classList.add('hidden');
+  }
+
+  function isMobileViewport() {
+    return window.matchMedia('(max-width: 900px)').matches;
+  }
+
+  function closeMobileCartModal() {
+    if (!mobileCartModal) return;
+    mobileCartModal.classList.add('hidden');
+  }
+
+  function renderMobileCartPreview() {
+    if (!mobileCartItems) return;
+
+    if (!cart.length) {
+      mobileCartItems.innerHTML = '<p class="muted">Your cart is empty.</p>';
+      return;
+    }
+
+    mobileCartItems.innerHTML = cart.map((item) => {
+      const lineTotal = item.restricted ? 'Staff approval required' : currency(item.qty * item.price);
+      return `
+        <div class="line-item">
+          <strong>${item.qty} x ${item.name}</strong>
+          <div class="muted small">${lineTotal}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function flashCartAddedMessage(itemName) {
+    if (!cartAddBlinkMessage) return;
+    cartAddBlinkMessage.textContent = itemName ? `${itemName} added to cart` : 'Added to cart';
+    cartAddBlinkMessage.classList.remove('hidden', 'blink');
+    void cartAddBlinkMessage.offsetWidth;
+    cartAddBlinkMessage.classList.add('blink');
+  }
+
+  function openMobileCartModal(itemName) {
+    if (!mobileCartModal || !isMobileViewport()) return;
+    flashCartAddedMessage(itemName);
+    renderMobileCartPreview();
+    mobileCartModal.classList.remove('hidden');
   }
 
   async function handleConnectionRetry() {
@@ -727,6 +780,7 @@ async function bootstrapCustomerApp() {
       cart.push({ ...item, qty: item.restricted ? 1 : 1 });
     }
     renderCart();
+    openMobileCartModal(item.name);
   }
 
   function renderCart() {
@@ -788,9 +842,13 @@ async function bootstrapCustomerApp() {
   function updateTotals() {
     const subtotal = cart.filter((x) => !x.restricted).reduce((sum, item) => sum + item.price * item.qty, 0);
     const tax = subtotal * 0.05;
+    const grandTotal = subtotal + tax;
     document.getElementById('subtotal').textContent = currency(subtotal);
     document.getElementById('tax').textContent = currency(tax);
-    document.getElementById('total').textContent = currency(subtotal + tax);
+    document.getElementById('total').textContent = currency(grandTotal);
+    if (mobileSubtotal) mobileSubtotal.textContent = currency(subtotal);
+    if (mobileTax) mobileTax.textContent = currency(tax);
+    if (mobileTotal) mobileTotal.textContent = currency(grandTotal);
   }
 
   function validateOrder() {
@@ -984,11 +1042,45 @@ async function bootstrapCustomerApp() {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && profileDrawer && !profileDrawer.classList.contains('hidden')) {
       closeProfileDrawer();
+      return;
+    }
+
+    if (event.key === 'Escape' && mobileCartModal && !mobileCartModal.classList.contains('hidden')) {
+      closeMobileCartModal();
     }
   });
+
+  if (closeMobileCartModalBtn) {
+    closeMobileCartModalBtn.onclick = closeMobileCartModal;
+  }
+
+  if (mobileCartModal) {
+    mobileCartModal.onclick = (event) => {
+      if (event.target === mobileCartModal) {
+        closeMobileCartModal();
+      }
+    };
+  }
+
+  if (mobileViewCartBtn) {
+    mobileViewCartBtn.onclick = () => {
+      closeMobileCartModal();
+      if (cartPanel) {
+        cartPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+  }
+
+  if (mobilePlaceOrderBtn) {
+    mobilePlaceOrderBtn.onclick = () => {
+      closeMobileCartModal();
+      void placeOrder();
+    };
+  }
 
   renderTabs();
   renderMenu();
   renderCart();
+  renderMobileCartPreview();
   updateCustomerAuthStatus();
 }

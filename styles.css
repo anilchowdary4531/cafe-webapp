@@ -730,6 +730,64 @@ a:focus-visible {
   border-radius: 24px;
 }
 
+.cart-quick-modal {
+  z-index: 40;
+}
+
+.cart-quick-card {
+  width: min(980px, 100%);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cart-add-blink {
+  margin: 0;
+  font-weight: 800;
+  color: var(--success);
+  background: var(--success-soft);
+  border: 1px solid #86efac;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.cart-add-blink.blink {
+  animation: cart-blink 0.3s ease 6 alternate;
+}
+
+@keyframes cart-blink {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0.3; transform: scale(1.01); }
+}
+
+.cart-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-height: 0;
+}
+
+.cart-quick-pane {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--card-strong);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.cart-quick-pane h4 {
+  margin: 0 0 10px;
+}
+
+.cart-quick-scroll {
+  overflow-y: auto;
+  max-height: min(44vh, 380px);
+  padding-right: 4px;
+}
+
 .auth-modal-card {
   width: min(500px, 100%);
 }
@@ -932,6 +990,18 @@ a:focus-visible {
     max-height: 90vh;
   }
 
+  .cart-quick-card {
+    max-height: 92vh;
+  }
+
+  .cart-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cart-quick-scroll {
+    max-height: min(48vh, 420px);
+  }
+
   .profile-panel {
     width: 100%;
   }
@@ -1007,6 +1077,23 @@ a:focus-visible {
   .modal-card {
     max-height: 100vh;
     border-radius: 0;
+  }
+
+  .cart-quick-card {
+    padding: 16px;
+  }
+
+  .cart-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .cart-quick-pane {
+    padding: 10px;
+  }
+
+  .cart-quick-pane h4 {
+    font-size: 14px;
   }
 }
 
