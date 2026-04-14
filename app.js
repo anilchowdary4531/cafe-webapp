@@ -69,6 +69,9 @@ async function bootstrapCustomerApp() {
   const mobileTotal = document.getElementById('mobileTotal');
   const mobileViewCartBtn = document.getElementById('mobileViewCartBtn');
   const mobilePlaceOrderBtn = document.getElementById('mobilePlaceOrderBtn');
+  const floatingCartBar = document.getElementById('floatingCartBar');
+  const floatingCartCount = document.getElementById('floatingCartCount');
+  const floatingCartTotal = document.getElementById('floatingCartTotal');
 
   const OTP_EXPIRY_MS = 5 * 60 * 1000;
   const OTP_RESEND_COOLDOWN_MS = 30 * 1000;
@@ -205,6 +208,22 @@ async function bootstrapCustomerApp() {
     cartAddBlinkMessage.classList.remove('hidden', 'blink');
     void cartAddBlinkMessage.offsetWidth;
     cartAddBlinkMessage.classList.add('blink');
+  }
+
+  function updateFloatingCartBar() {
+    if (!floatingCartBar) return;
+    const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+    const subtotal = cart.filter((x) => !x.restricted).reduce((sum, item) => sum + item.price * item.qty, 0);
+    const grandTotal = subtotal * 1.05;
+
+    if (!activeTable || totalQty === 0) {
+      floatingCartBar.classList.add('hidden');
+      return;
+    }
+
+    floatingCartBar.classList.remove('hidden');
+    if (floatingCartCount) floatingCartCount.textContent = `${totalQty} item${totalQty === 1 ? '' : 's'}`;
+    if (floatingCartTotal) floatingCartTotal.textContent = currency(grandTotal);
   }
 
   function openMobileCartModal(itemName) {
@@ -849,6 +868,7 @@ async function bootstrapCustomerApp() {
     if (mobileSubtotal) mobileSubtotal.textContent = currency(subtotal);
     if (mobileTax) mobileTax.textContent = currency(tax);
     if (mobileTotal) mobileTotal.textContent = currency(grandTotal);
+    updateFloatingCartBar();
   }
 
   function validateOrder() {
@@ -1076,6 +1096,16 @@ async function bootstrapCustomerApp() {
       closeMobileCartModal();
       void placeOrder();
     };
+  }
+
+  if (floatingCartBar) {
+    floatingCartBar.onclick = () => {
+      renderMobileCartPreview();
+      if (mobileCartModal) mobileCartModal.classList.remove('hidden');
+    };
+    floatingCartBar.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') floatingCartBar.click();
+    });
   }
 
   renderTabs();

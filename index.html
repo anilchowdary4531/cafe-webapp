@@ -70,7 +70,7 @@
           <div id="menuGrid" class="menu-grid"></div>
         </div>
 
-        <aside id="cartPanel" class="cart card">
+        <aside id="cartPanel" class="cart card desktop-only">
           <h3>Your Cart</h3>
           <div id="cartItems" class="cart-items"></div>
           <div class="bill-summary">
@@ -96,6 +96,17 @@
         <div id="ordersList"></div>
       </div>
     </section>
+
+    <div id="floatingCartBar" class="floating-cart-bar hidden" role="button" tabindex="0" aria-label="Open cart">
+      <div class="floating-cart-left">
+        <span class="floating-cart-icon">🛒</span>
+        <span id="floatingCartCount" class="floating-cart-count">0 items</span>
+      </div>
+      <div class="floating-cart-right">
+        <strong id="floatingCartTotal">Rs 0.00</strong>
+        <span class="floating-cart-cta">View Cart →</span>
+      </div>
+    </div>
 
     <section id="mobileCartModal" class="modal cart-quick-modal hidden" aria-label="Cart preview" aria-live="polite">
       <div class="modal-card card cart-quick-card">
