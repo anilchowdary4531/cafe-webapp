@@ -181,6 +181,7 @@ async function bootstrapCustomerApp() {
   function closeMobileCartModal() {
     if (!mobileCartModal) return;
     mobileCartModal.classList.add('hidden');
+    document.body.classList.remove('modal-open');
   }
 
   function renderMobileCartPreview() {
@@ -231,6 +232,7 @@ async function bootstrapCustomerApp() {
     flashCartAddedMessage(itemName);
     renderMobileCartPreview();
     mobileCartModal.classList.remove('hidden');
+    document.body.classList.add('modal-open');
   }
 
   async function handleConnectionRetry() {
@@ -1101,7 +1103,10 @@ async function bootstrapCustomerApp() {
   if (floatingCartBar) {
     floatingCartBar.onclick = () => {
       renderMobileCartPreview();
-      if (mobileCartModal) mobileCartModal.classList.remove('hidden');
+      if (mobileCartModal) {
+        mobileCartModal.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+      }
     };
     floatingCartBar.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') floatingCartBar.click();

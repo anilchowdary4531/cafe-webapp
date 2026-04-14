@@ -47,8 +47,22 @@ body.dark-theme {
 
 * { box-sizing: border-box; }
 
+/* Chrome mobile: remove tap highlight and 300ms delay everywhere */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-x pan-y;
+}
+
+button, a, [role="button"], select, label {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
 html {
   scroll-behavior: smooth;
+  /* Prevent Chrome Android pull-to-refresh on the whole page */
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -59,6 +73,15 @@ body {
   background: var(--bg-accent);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  /* Chrome Android: allow body scroll normally unless modal is open */
+  overscroll-behavior-y: none;
+}
+
+/* Lock body scroll when a modal is open (set via JS) */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
 }
 
 a {
@@ -739,9 +762,19 @@ a:focus-visible {
   display: none;
 }
 
+/* Hide desktop cart panel on mobile — targeted by ID for maximum specificity */
 @media (max-width: 900px) {
+  #cartPanel {
+    display: none !important;
+  }
+
   .desktop-only {
     display: none !important;
+  }
+
+  /* Make layout a plain block on mobile so the hidden cart leaves no gap */
+  .layout {
+    display: block !important;
   }
 
   .floating-cart-bar {
@@ -962,6 +995,10 @@ a:focus-visible {
     align-items: stretch;
   }
 
+  .layout {
+    gap: 16px;
+  }
+
   .topbar {
     position: sticky;
     top: 0;
@@ -998,10 +1035,6 @@ a:focus-visible {
 
   .table-box {
     min-width: 100%;
-  }
-
-  .layout {
-    gap: 16px;
   }
 
   .search-wrap {
@@ -1082,17 +1115,6 @@ a:focus-visible {
 
   .profile-panel {
     width: 100%;
-  }
-
-  .cart {
-    position: static;
-    border-radius: 18px;
-  }
-
-  #placeOrderBtn {
-    position: sticky;
-    bottom: calc(8px + env(safe-area-inset-bottom));
-    z-index: 3;
   }
 }
 
