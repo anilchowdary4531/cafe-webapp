@@ -46,7 +46,7 @@ public class AuthService {
       throw new IllegalArgumentException("Invalid credentials");
     }
 
-    String resolvedRole = emailRoleResolver.resolveRole(user.getEmail(), user.getRole());
+    String resolvedRole = emailRoleResolver.resolveRole(user.getRole());
     if (!resolvedRole.equals(user.getRole())) {
       user.setRole(resolvedRole);
       user = appUserRepository.save(user);
@@ -80,7 +80,7 @@ public class AuthService {
     }
 
     AppUser user = refreshToken.getUser();
-    String resolvedRole = emailRoleResolver.resolveRole(user.getEmail(), user.getRole());
+    String resolvedRole = emailRoleResolver.resolveRole(user.getRole());
     String accessToken = jwtService.generateAccessToken(user.getEmail(), Map.of("role", resolvedRole, "uid", user.getId()));
 
     return new AuthDtos.AuthResponse(

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class EmailRoleResolver {
-  public String resolveRole(String email, String persistedRole) {
+  public String resolveRole(String persistedRole) {
     String normalizedRole = normalize(persistedRole).toUpperCase(Locale.ROOT);
     try {
       if (!normalizedRole.isBlank()) {
