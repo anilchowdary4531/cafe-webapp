@@ -607,12 +607,17 @@ async function adminLogin(email, password) {
     body: JSON.stringify({ email, password })
   });
 
-  if (!response?.user || response.user.role !== 'ADMIN') {
-    throw new Error('Only admin users can access this page');
+  const role = response?.user?.role || '';
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(role)) {
+    throw new Error('Only admin or super admin users can access this page');
   }
 
   setAdminAccessToken(response.accessToken);
   return response.user;
+}
+
+async function fetchAuthMe() {
+  return requestJson('/api/auth/me', { method: 'GET' }, true);
 }
 
 async function fetchAdminUsers() {
@@ -632,6 +637,18 @@ async function updateStaffAccess(userId, allowStaffAccess) {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ allowStaffAccess })
+  }, true);
+}
+
+async function fetchSuperAdminRestaurants() {
+  return requestJson('/api/super-admin/restaurants', { method: 'GET' }, true);
+}
+
+async function createRestaurantWithAdmin(payload) {
+  return requestJson('/api/super-admin/restaurants', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
   }, true);
 }
 

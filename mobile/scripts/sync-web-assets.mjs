@@ -14,10 +14,12 @@ const filesToCopy = [
   'index.html',
   'staff.html',
   'admin.html',
+  'super-admin.html',
   'styles.css',
   'app.js',
   'staff.js',
   'admin.js',
+  'super-admin.js',
   'data.js'
 ];
 
@@ -70,7 +72,7 @@ function injectConfigTag(html) {
     return html;
   }
 
-  return html.replace(/<script\s+src="(app|staff|admin)\.js"\s*><\/script>/, (_match, scriptName) => {
+  return html.replace(/<script\s+src="(app|staff|admin|super-admin)\.js"\s*><\/script>/, (_match, scriptName) => {
     return `<script src="./config.js"></script>\n  <script src="./${scriptName}.js"></script>`;
   });
 }

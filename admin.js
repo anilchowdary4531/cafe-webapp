@@ -133,6 +133,21 @@ async function bootstrapAdmin() {
     }
   }
 
+  async function redirectIfSuperAdmin() {
+    if (!getAdminAccessToken()) return false;
+    try {
+      const me = await fetchAuthMe();
+      if (me?.role === 'SUPER_ADMIN') {
+        window.location.href = 'super-admin.html';
+        return true;
+      }
+    } catch (_error) {
+      clearAdminAccessToken();
+      updateAuthStatus();
+    }
+    return false;
+  }
+
   function getFoodType(item) {
     const text = `${item.name || ''} ${item.description || ''}`.toLowerCase();
     const nonVegPattern = /\b(chicken|mutton|fish|prawn|shrimp|egg|beef|pork|meat|nugget)\b/;
@@ -283,8 +298,12 @@ async function bootstrapAdmin() {
     adminLoginForm.onsubmit = async (event) => {
       event.preventDefault();
       try {
-        await adminLogin(adminEmailInput.value.trim(), adminPasswordInput.value);
+        const user = await adminLogin(adminEmailInput.value.trim(), adminPasswordInput.value);
         adminPasswordInput.value = '';
+        if (user?.role === 'SUPER_ADMIN') {
+          window.location.href = 'super-admin.html';
+          return;
+        }
         updateAuthStatus();
         await renderFeatureFlags();
         await renderUsers();
@@ -334,6 +353,10 @@ async function bootstrapAdmin() {
 
   if (refreshUsersBtn) {
     refreshUsersBtn.onclick = () => { void renderUsers(); };
+  }
+
+  if (await redirectIfSuperAdmin()) {
+    return;
   }
 
   updateAuthStatus();

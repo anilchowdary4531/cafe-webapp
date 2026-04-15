@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>Cafe Super Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Super Admin Panel</h1>
+      <p class="muted">Create restaurant accounts and primary admins</p>
+    </div>
+    <div class="top-links">
+      <a href="index.html">Customer</a>
+      <a href="admin.html">Admin</a>
+      <a href="staff.html">Staff</a>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="card section-card">
+      <h2>Super Admin Login</h2>
+      <p id="superAdminAuthStatus" class="muted small">Super admin login required for secure actions.</p>
+      <form id="superAdminLoginForm" class="form-grid">
+        <label for="superAdminEmail" class="sr-only">Super admin email</label>
+        <input id="superAdminEmail" type="email" placeholder="Super admin email" required />
+        <label for="superAdminPassword" class="sr-only">Super admin password</label>
+        <input id="superAdminPassword" type="password" placeholder="Super admin password" required />
+        <div class="actions-row">
+          <button class="primary" type="submit">Login</button>
+          <button id="superAdminLogoutBtn" type="button">Logout</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card section-card section-spacing">
+      <h2>Create Restaurant + Primary Admin</h2>
+      <form id="createRestaurantForm" class="form-grid">
+        <label for="restaurantName" class="sr-only">Restaurant name</label>
+        <input id="restaurantName" placeholder="Restaurant name" required />
+        <label for="restaurantSlug" class="sr-only">Restaurant slug</label>
+        <input id="restaurantSlug" placeholder="restaurant-slug (optional)" />
+        <label for="newAdminEmail" class="sr-only">Primary admin email</label>
+        <input id="newAdminEmail" type="email" placeholder="Primary admin email" required />
+        <label for="newAdminPassword" class="sr-only">Primary admin password</label>
+        <input id="newAdminPassword" type="password" minlength="6" placeholder="Primary admin password" required />
+        <button class="primary" type="submit">Create Restaurant Account</button>
+      </form>
+    </section>
+
+    <section class="card section-card section-spacing">
+      <div class="section-head">
+        <h2>Restaurant Accounts</h2>
+        <button id="refreshRestaurantsBtn" type="button">Refresh</button>
+      </div>
+      <div id="restaurantsList" class="detail-list"></div>
+    </section>
+  </main>
+
+  <script src="super-admin.js"></script>
+</body>
+</html>
+
