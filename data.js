@@ -4,7 +4,12 @@ const STORAGE_KEYS = {
   requests: 'cafe_requests_v1',
   customerSessions: 'cafe_customer_sessions_v1',
   otpChallenges: 'cafe_otp_challenges_v1',
-  adminAccessToken: 'cafe_admin_access_token_v1'
+  adminAccessToken: 'cafe_admin_access_token_v1',
+  featureFlags: 'cafe_feature_flags_v1'
+};
+
+const DEFAULT_FEATURE_FLAGS = {
+  staffAcceptanceEtaEnabled: true
 };
 
 const API_BASE_URL = window.CAFE_API_BASE_URL || 'http://localhost:4000';
@@ -152,6 +157,9 @@ function normalizeOrder(order) {
     customerEmail: order.customerEmail || '',
     paymentStatus: order.paymentStatus || 'unpaid',
     paidAt: order.paidAt || '',
+    acceptedAt: order.acceptedAt || '',
+    acceptedBy: order.acceptedBy || '',
+    servingEtaMinutes: Number(order.servingEtaMinutes || 0),
     phoneVerifiedAt: order.phoneVerifiedAt || '',
     createdAt: order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString(),
     items: Array.isArray(order.items)
@@ -279,6 +287,57 @@ async function deleteMenuItemWithFallback(id) {
 function saveMenu(menu) {
   localStorage.setItem(STORAGE_KEYS.menu, JSON.stringify(menu));
 }
+
+function loadFeatureFlags() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.featureFlags);
+    if (!raw) return { ...DEFAULT_FEATURE_FLAGS };
+    return { ...DEFAULT_FEATURE_FLAGS, ...JSON.parse(raw) };
+  } catch (_error) {
+    return { ...DEFAULT_FEATURE_FLAGS };
+  }
+}
+
+function saveFeatureFlags(flags) {
+  localStorage.setItem(STORAGE_KEYS.featureFlags, JSON.stringify({ ...DEFAULT_FEATURE_FLAGS, ...flags }));
+}
+
+async function hydrateFeatureFlagsFromApi() {
+  const endpoints = ['/api/settings/features', '/api/admin/settings/features'];
+  for (const endpoint of endpoints) {
+    try {
+      const requiresAdmin = endpoint.includes('/admin/');
+      const remoteFlags = await requestJson(endpoint, { method: 'GET' }, requiresAdmin);
+      if (remoteFlags && typeof remoteFlags === 'object') {
+        const merged = { ...DEFAULT_FEATURE_FLAGS, ...remoteFlags };
+        saveFeatureFlags(merged);
+        return merged;
+      }
+    } catch (_error) {
+      // Try next endpoint/fallback.
+    }
+  }
+
+  return loadFeatureFlags();
+}
+
+async function updateFeatureFlagWithFallback(key, value) {
+  const nextFlags = { ...loadFeatureFlags(), [key]: value };
+
+  try {
+    const payload = { [key]: value };
+    await requestJson('/api/admin/settings/features', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }, true);
+  } catch (_error) {
+    // Keep local fallback.
+  }
+
+  saveFeatureFlags(nextFlags);
+  return nextFlags;
+}
 function loadOrders() {
   return JSON.parse(localStorage.getItem(STORAGE_KEYS.orders) || '[]');
 }
@@ -328,6 +387,9 @@ async function createOrderWithFallback(payload) {
       customerEmail: payload.customerEmail || '',
       paymentStatus: 'unpaid',
       paidAt: '',
+      acceptedAt: '',
+      acceptedBy: '',
+      servingEtaMinutes: 0,
       phoneVerifiedAt: payload.phoneVerifiedAt || now.toISOString(),
       createdAt: now.toLocaleString(),
       items: payload.items.map((item) => ({
@@ -344,14 +406,27 @@ async function createOrderWithFallback(payload) {
   }
 }
 
-async function updateOrderStatusWithFallback(id, status) {
+async function updateOrderStatusWithFallback(id, status, options = {}) {
+  const servingEtaMinutes = Math.max(0, Number(options.servingEtaMinutes || 0));
+  const acceptedBy = String(options.acceptedBy || '').trim();
+  const acceptedAt = options.acceptedAt || (status === 'accepted' ? new Date().toISOString() : '');
+
   try {
     await requestJson(`/api/orders/${id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status, servingEtaMinutes, acceptedBy, acceptedAt })
     });
-    const orders = loadOrders().map((order) => (String(order.id) === String(id) ? { ...order, status } : order));
+    const orders = loadOrders().map((order) => {
+      if (String(order.id) !== String(id)) return order;
+      const nextOrder = { ...order, status };
+      if (status === 'accepted') {
+        nextOrder.servingEtaMinutes = servingEtaMinutes;
+        nextOrder.acceptedBy = acceptedBy || order.acceptedBy || 'Staff';
+        nextOrder.acceptedAt = acceptedAt;
+      }
+      return nextOrder;
+    });
     saveOrders(orders);
     return true;
   } catch (_error) {
@@ -359,6 +434,11 @@ async function updateOrderStatusWithFallback(id, status) {
     const localOrder = orders.find((order) => String(order.id) === String(id));
     if (localOrder) {
       localOrder.status = status;
+      if (status === 'accepted') {
+        localOrder.servingEtaMinutes = servingEtaMinutes;
+        localOrder.acceptedBy = acceptedBy || localOrder.acceptedBy || 'Staff';
+        localOrder.acceptedAt = acceptedAt;
+      }
       saveOrders(orders);
     }
     return false;

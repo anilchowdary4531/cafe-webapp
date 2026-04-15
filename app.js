@@ -24,6 +24,7 @@ async function bootstrapCustomerApp() {
   const requestBillBtn = document.getElementById('requestBillBtn');
   const viewOrdersBtn = document.getElementById('viewOrdersBtn');
   const ordersModal = document.getElementById('ordersModal');
+  const customerOrderFilters = document.getElementById('customerOrderFilters');
   const closeOrdersModal = document.getElementById('closeOrdersModal');
   const ordersList = document.getElementById('ordersList');
   const orderNote = document.getElementById('orderNote');
@@ -88,6 +89,7 @@ async function bootstrapCustomerApp() {
   let activeTable = '';
   let cart = [];
   let activeCategory = 'All';
+  let activeOrderFilter = 'all';
   let pendingOrderAfterOtp = false;
   let otpMetaIntervalId = null;
   let dismissedBannerState = '';
@@ -193,7 +195,7 @@ async function bootstrapCustomerApp() {
     }
 
     mobileCartItems.innerHTML = cart.map((item) => {
-      const lineTotal = item.restricted ? 'Staff approval required' : currency(item.qty * item.price);
+      const lineTotal = item.restricted ? 'Manual approval required' : currency(item.qty * item.price);
       return `
         <div class="line-item">
           <strong>${item.qty} x ${item.name}</strong>
@@ -258,7 +260,8 @@ async function bootstrapCustomerApp() {
   }
 
   if (loginToggleBtn) {
-    loginToggleBtn.onclick = () => {
+    loginToggleBtn.onclick = (event) => {
+      if (event) event.preventDefault();
       pendingOrderAfterOtp = false;
       openOtpModal();
     };
@@ -424,6 +427,37 @@ async function bootstrapCustomerApp() {
       });
       return counts;
     }, {});
+  }
+
+  function matchesCustomerOrderFilter(order, filterKey) {
+    if (filterKey === 'all') return true;
+    if (filterKey === 'in-progress') return ['received', 'accepted', 'preparing'].includes(order.status);
+    if (filterKey === 'accepted') return order.status === 'accepted';
+    if (filterKey === 'served') return order.status === 'served';
+    return true;
+  }
+
+  function renderCustomerOrderFilters(tableOrders) {
+    if (!customerOrderFilters) return;
+    const defs = [
+      { key: 'all', label: `All (${tableOrders.length})` },
+      { key: 'in-progress', label: `In Progress (${tableOrders.filter((order) => matchesCustomerOrderFilter(order, 'in-progress')).length})` },
+      { key: 'accepted', label: `Accepted (${tableOrders.filter((order) => matchesCustomerOrderFilter(order, 'accepted')).length})` },
+      { key: 'served', label: `Served (${tableOrders.filter((order) => matchesCustomerOrderFilter(order, 'served')).length})` }
+    ];
+
+    customerOrderFilters.innerHTML = '';
+    defs.forEach((def) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `tab ${activeOrderFilter === def.key ? 'active' : ''}`;
+      btn.textContent = def.label;
+      btn.onclick = async () => {
+        activeOrderFilter = def.key;
+        await renderOrdersForTable();
+      };
+      customerOrderFilters.appendChild(btn);
+    });
   }
   subscribeConnectionStatus(renderConnectionBanner);
   void refreshApiHealth();
@@ -777,7 +811,7 @@ async function bootstrapCustomerApp() {
         <div class="tag">${item.category}</div>
         <h4>${item.name}</h4>
         <div class="muted small">${item.description || ''}</div>
-        <div class="price">${item.restricted ? 'Staff Approval' : currency(item.price)}</div>
+        <div class="price">${item.restricted ? 'Manual Approval' : currency(item.price)}</div>
         ${item.restricted ? '<div class="note">Age verification and staff approval required.</div>' : ''}
       `;
       const btn = document.createElement('button');
@@ -819,7 +853,7 @@ async function bootstrapCustomerApp() {
         <div class="cart-line-top">
           <div>
             <strong>${item.name}</strong>
-            <div class="muted small">${item.restricted ? 'Staff approval required' : currency(item.price)}</div>
+            <div class="muted small">${item.restricted ? 'Manual approval required' : currency(item.price)}</div>
           </div>
           <button data-id="${item.id}" class="remove-btn">Remove</button>
         </div>
@@ -924,8 +958,8 @@ async function bootstrapCustomerApp() {
          table: activeTable,
          type: 'Cigarette Request',
          note: restrictedItems.length === 1
-           ? `Customer requested ${restrictedItems[0].name}. Staff approval and age verification required.`
-           : 'Customer requested restricted items. Staff approval and age verification required.',
+           ? `Customer requested ${restrictedItems[0].name}. Manual approval and age verification required.`
+           : 'Customer requested restricted items. Manual approval and age verification required.',
          items: restrictedItems.map(({ id, name, qty }) => ({ id, name, qty })),
          customerPhone: customerSession.phone,
          customerPhoneMasked: maskedPhone,
@@ -985,13 +1019,15 @@ async function bootstrapCustomerApp() {
     if (!activeTable) return;
     await hydrateOrdersFromApi(activeTable);
     const tableOrders = loadOrders().filter((order) => order.table === activeTable);
+    renderCustomerOrderFilters(tableOrders);
+    const filteredOrders = tableOrders.filter((order) => matchesCustomerOrderFilter(order, activeOrderFilter));
     ordersList.innerHTML = '';
-    if (!tableOrders.length) {
+    if (!filteredOrders.length) {
       ordersList.innerHTML = '<p class="muted">No orders yet for this table.</p>';
       return;
     }
 
-    tableOrders.forEach((order) => {
+    filteredOrders.forEach((order) => {
       const card = document.createElement('div');
       card.className = 'order-card';
       card.innerHTML = `
@@ -1006,6 +1042,8 @@ async function bootstrapCustomerApp() {
         <div class="detail-list">
           ${order.customerPhoneMasked ? `<span class="muted small">Phone: ${order.customerPhoneMasked}</span>` : ''}
           <span class="muted small">Payment: ${order.paymentStatus || 'unpaid'}</span>
+          ${order.status === 'accepted' && order.servingEtaMinutes ? `<span class="muted small">Serving ETA: ${order.servingEtaMinutes} min</span>` : ''}
+          ${order.acceptedAt ? `<span class="muted small">Accepted: ${formatStoredDate(order.acceptedAt)}</span>` : ''}
           ${order.note ? `<span class="muted small">Note: ${order.note}</span>` : ''}
         </div>
         <div class="bill-summary">

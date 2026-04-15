@@ -18,15 +18,11 @@
       <p class="muted">QR-based table ordering demo</p>
     </div>
     <div class="top-right">
-      <div class="top-links">
+      <nav class="top-links text-nav" aria-label="Primary navigation">
         <a href="staff.html">Staff</a>
         <a href="admin.html">Admin</a>
-      </div>
-      <button id="loginToggleBtn" type="button" class="login-trigger primary" aria-label="Login with phone OTP">Login</button>
-      <button id="profileToggleBtn" type="button" class="profile-trigger" aria-label="Open profile settings">
-        <span id="profileTriggerAvatar" class="profile-avatar">U</span>
-        <span>Profile</span>
-      </button>
+        <a id="loginToggleBtn" href="#" aria-label="Login with phone OTP">Login</a>
+      </nav>
     </div>
   </header>
   <div id="connectionBanner" class="connection-banner hidden" role="status" aria-live="polite">
@@ -86,7 +82,7 @@
           <textarea id="orderNote" aria-label="Order notes" rows="3" placeholder="Add notes like less sugar, no ice, extra spicy..."></textarea>
           <div id="customerAuthStatus" class="auth-status muted small">Phone verification is required before placing an order.</div>
           <button id="placeOrderBtn" class="primary full">Place Order</button>
-          <p class="muted small">Cigarettes are handled as a staff-approval request and cannot be directly paid through this demo.</p>
+          <p class="muted small">Cigarettes are handled as a manual approval request and cannot be directly paid through this demo.</p>
         </aside>
       </section>
     </section>
@@ -97,6 +93,7 @@
           <h3>My Orders</h3>
           <button id="closeOrdersModal">Close</button>
         </div>
+        <div id="customerOrderFilters" class="tabs order-filters"></div>
         <div id="ordersList"></div>
       </div>
     </section>

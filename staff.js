@@ -5,6 +5,7 @@ document.head.appendChild(staffScript);
 
 function initStaff() {
   const staffOrders = document.getElementById('staffOrders');
+  const staffOrderFilters = document.getElementById('staffOrderFilters');
   const serviceRequests = document.getElementById('serviceRequests');
   const refreshStaffBtn = document.getElementById('refreshStaffBtn');
   const clearCompletedRequestsBtn = document.getElementById('clearCompletedRequestsBtn');
@@ -14,6 +15,39 @@ function initStaff() {
   const connectionDismissBtn = document.getElementById('connectionDismissBtn');
   let dismissedBannerState = '';
   let currentBannerState = '';
+  let featureFlags = loadFeatureFlags();
+  let activeOrderFilter = 'all';
+
+  function matchesOrderFilter(order, filterKey) {
+    if (filterKey === 'all') return true;
+    if (filterKey === 'pending') return ['received', 'preparing'].includes(order.status);
+    if (filterKey === 'accepted') return order.status === 'accepted';
+    if (filterKey === 'served') return order.status === 'served';
+    return true;
+  }
+
+  function renderStaffOrderFilters(orders) {
+    if (!staffOrderFilters) return;
+    const filterDefs = [
+      { key: 'all', label: `All (${orders.length})` },
+      { key: 'pending', label: `Pending (${orders.filter((order) => matchesOrderFilter(order, 'pending')).length})` },
+      { key: 'accepted', label: `Accepted (${orders.filter((order) => matchesOrderFilter(order, 'accepted')).length})` },
+      { key: 'served', label: `Served (${orders.filter((order) => matchesOrderFilter(order, 'served')).length})` }
+    ];
+
+    staffOrderFilters.innerHTML = '';
+    filterDefs.forEach((filterDef) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `tab ${activeOrderFilter === filterDef.key ? 'active' : ''}`;
+      btn.textContent = filterDef.label;
+      btn.onclick = () => {
+        activeOrderFilter = filterDef.key;
+        void render();
+      };
+      staffOrderFilters.appendChild(btn);
+    });
+  }
 
   async function handleConnectionRetry() {
     if (!connectionRetryBtn) return;
@@ -93,16 +127,20 @@ function initStaff() {
   window.setInterval(() => { void refreshApiHealth(); }, 30000);
 
   async function render() {
+    featureFlags = await hydrateFeatureFlagsFromApi();
     await hydrateOrdersFromApi();
     await hydrateRequestsFromApi();
     const orders = loadOrders();
     const requests = loadRequests();
+    renderStaffOrderFilters(orders);
+    const filteredOrders = orders.filter((order) => matchesOrderFilter(order, activeOrderFilter));
 
     staffOrders.innerHTML = '';
-    if (!orders.length) {
+    if (!filteredOrders.length) {
       staffOrders.innerHTML = '<p class="muted">No orders yet.</p>';
     } else {
-      orders.forEach((order) => {
+      filteredOrders.forEach((order) => {
+        const acceptanceEnabled = Boolean(featureFlags.staffAcceptanceEtaEnabled);
         const row = document.createElement('div');
         row.className = 'order-card';
         row.innerHTML = `
@@ -114,11 +152,14 @@ function initStaff() {
             <span class="status ${order.status}">${order.status}</span>
           </div>
           <div class="muted small">Payment: <span class="status ${order.paymentStatus || 'unpaid'}">${order.paymentStatus || 'unpaid'}</span></div>
+          ${order.status === 'accepted' && order.servingEtaMinutes ? `<div class="muted small">Serving ETA: ${order.servingEtaMinutes} min</div>` : ''}
           <div>${order.items.map((x) => `<div class="line-item">${x.qty} × ${x.name}</div>`).join('')}</div>
           ${order.customerPhoneMasked ? `<div class="muted small">Verified phone: ${order.customerPhoneMasked}</div>` : ''}
           ${order.customerEmail ? `<div class="muted small">Email: ${order.customerEmail}</div>` : ''}
           ${order.note ? `<div class="note">Note: ${order.note}</div>` : ''}
           <div class="actions-row">
+            ${acceptanceEnabled ? `<input type="number" min="1" max="180" step="1" data-eta-id="${order.id}" placeholder="ETA (min)" style="max-width: 120px;" />` : ''}
+            ${acceptanceEnabled ? `<button data-accept-id="${order.id}">Accept</button>` : ''}
             <button data-status="received" data-id="${order.id}">Received</button>
             <button data-status="preparing" data-id="${order.id}">Preparing</button>
             <button data-status="served" data-id="${order.id}">Served</button>
@@ -126,6 +167,24 @@ function initStaff() {
           </div>
         `;
         staffOrders.appendChild(row);
+      });
+
+      staffOrders.querySelectorAll('[data-accept-id]').forEach((btn) => {
+        btn.onclick = async () => {
+          const orderId = btn.dataset.acceptId;
+          const etaInput = staffOrders.querySelector(`[data-eta-id="${orderId}"]`);
+          const etaMinutes = Number(etaInput?.value || 0);
+          if (!Number.isFinite(etaMinutes) || etaMinutes <= 0) {
+            alert('Enter serving ETA in minutes before accepting the order.');
+            return;
+          }
+          await updateOrderStatusWithFallback(orderId, 'accepted', {
+            servingEtaMinutes: etaMinutes,
+            acceptedBy: 'Staff',
+            acceptedAt: new Date().toISOString()
+          });
+          await render();
+        };
       });
 
       staffOrders.querySelectorAll('[data-status]').forEach((btn) => {

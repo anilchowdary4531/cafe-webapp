@@ -24,6 +24,8 @@ async function bootstrapAdmin() {
   const menuImagePreview = document.getElementById('menuImagePreview');
   const adminMenuList = document.getElementById('adminMenuList');
   const resetMenuBtn = document.getElementById('resetMenuBtn');
+  const staffEtaToggle = document.getElementById('staffEtaToggle');
+  const staffEtaToggleHint = document.getElementById('staffEtaToggleHint');
   const connectionBanner = document.getElementById('connectionBanner');
   const connectionBannerText = document.getElementById('connectionBannerText');
   const connectionRetryBtn = document.getElementById('connectionRetryBtn');
@@ -114,6 +116,21 @@ async function bootstrapAdmin() {
       ? 'Admin authenticated. You can create staff and manage access.'
       : 'Admin login required for secure actions.';
     adminAuthStatus.classList.toggle('verified', hasToken);
+    if (staffEtaToggle) {
+      staffEtaToggle.disabled = !hasToken;
+    }
+  }
+
+  async function renderFeatureFlags() {
+    if (!staffEtaToggle) return;
+    const flags = await hydrateFeatureFlagsFromApi();
+    const enabled = Boolean(flags.staffAcceptanceEtaEnabled);
+    staffEtaToggle.checked = enabled;
+    if (staffEtaToggleHint) {
+      staffEtaToggleHint.textContent = enabled
+        ? 'Enabled: staff must set a serving ETA while accepting orders.'
+        : 'Disabled: staff can update order status without entering serving ETA.';
+    }
   }
 
   function getFoodType(item) {
@@ -269,6 +286,7 @@ async function bootstrapAdmin() {
         await adminLogin(adminEmailInput.value.trim(), adminPasswordInput.value);
         adminPasswordInput.value = '';
         updateAuthStatus();
+        await renderFeatureFlags();
         await renderUsers();
         await renderMenuList();
       } catch (error) {
@@ -281,6 +299,7 @@ async function bootstrapAdmin() {
     adminLogoutBtn.onclick = async () => {
       clearAdminAccessToken();
       updateAuthStatus();
+      await renderFeatureFlags();
       await renderUsers();
       await renderMenuList();
     };
@@ -299,11 +318,26 @@ async function bootstrapAdmin() {
     };
   }
 
+  if (staffEtaToggle) {
+    staffEtaToggle.onchange = async () => {
+      if (!getAdminAccessToken()) {
+        alert('Admin login required to update this setting.');
+        staffEtaToggle.checked = Boolean(loadFeatureFlags().staffAcceptanceEtaEnabled);
+        return;
+      }
+
+      const nextValue = staffEtaToggle.checked;
+      await updateFeatureFlagWithFallback('staffAcceptanceEtaEnabled', nextValue);
+      await renderFeatureFlags();
+    };
+  }
+
   if (refreshUsersBtn) {
     refreshUsersBtn.onclick = () => { void renderUsers(); };
   }
 
   updateAuthStatus();
+  await renderFeatureFlags();
   void renderUsers();
   void renderMenuList();
 }
