@@ -9,6 +9,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
   Optional<AppUser> findByEmail(String email);
   Optional<AppUser> findByEmailIgnoreCase(String email);
   List<AppUser> findAllByOrderByCreatedAtDesc();
+  List<AppUser> findAllByRestaurantIdOrderByCreatedAtDesc(Long restaurantId);
+  Optional<AppUser> findByRestaurantIdAndRoleIgnoreCaseAndPrimaryAdminTrue(Long restaurantId, String role);
 }
 
 

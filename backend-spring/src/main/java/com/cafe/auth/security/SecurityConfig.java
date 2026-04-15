@@ -47,7 +47,8 @@ public class SecurityConfig {
                 "/api/requests/**",
                 "/api/admin/tax-slabs/active"
             ).permitAll()
-            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
+            .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
     return http.build();
@@ -79,3 +80,4 @@ public class SecurityConfig {
     return reg;
   }
 }
+
