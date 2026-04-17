@@ -27,7 +27,7 @@ management:
 
 
 app:
-  cors-origin: ${CORS_ORIGIN:http://localhost:8000,http://localhost,capacitor://localhost}
+  cors-origin: ${CORS_ORIGIN:http://localhost:8000,http://localhost,capacitor://localhost,https://sunset-cafe-site.up.railway.app}
   otp:
     expiry-seconds: ${OTP_EXPIRY_SECONDS:300}
     resend-cooldown-seconds: ${OTP_RESEND_COOLDOWN_SECONDS:30}
