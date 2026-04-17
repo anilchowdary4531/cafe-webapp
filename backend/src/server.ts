@@ -243,7 +243,8 @@ async function maybeSendCompletionAndPaymentEmail(orderId: string) {
 }
 
 app.register(cors, {
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : true
+  origin: true, // Allow all origins
+  credentials: true
 });
 
 app.get('/health', async () => ({ ok: true }));

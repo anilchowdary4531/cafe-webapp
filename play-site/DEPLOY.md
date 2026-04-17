@@ -1,46 +1,45 @@
 # GitHub Pages Deployment Guide for Sunset Cafe
 
-Publish `play-site/` to GitHub Pages to get free public URLs for Play Console.
+Publish `play-site/` from the same `cafe-webapp` repository to GitHub Pages.
 
-## Step 1 — Create GitHub repository
+## Step 1 — Create one repository
 
 1. Go to [github.com](https://github.com) and sign in.
 2. Click **New repository**.
-3. Name it: `sunset-cafe-site`
-4. Set visibility to **Public**.
+3. Name it: `cafe-webapp`
+4. Set visibility to **Public** (required for Pages on free plans).
 5. Click **Create repository**.
 
-## Step 2 — Push the play-site folder
+## Step 2 — Push app + site branch
+
+From this project root, run:
 
 ```bash
-cd /Users/anilkumarthammineni/Downloads/cafe-webapp/play-site
-git init
-git checkout -b main
-git add .
-git commit -m "Add Sunset Cafe website and privacy policy"
-git remote add origin https://github.com/YOUR_GITHUB_USERNAME/sunset-cafe-site.git
-git push -u origin main
+cd /Users/anilkumarthammineni/Downloads/cafe-webapp
+./scripts/push-to-github.sh YOUR_GITHUB_USERNAME
 ```
 
-Replace `YOUR_GITHUB_USERNAME` with your actual GitHub username.
+This pushes:
+
+- app code to `main`
+- site files from `play-site/` to `gh-pages`
 
 ## Step 3 — Enable GitHub Pages
 
-1. Open your repository on GitHub.
-2. Go to **Settings** → **Pages**.
-3. Under **Branch**, select `main` and folder `/` (root).
+1. Open `https://github.com/YOUR_GITHUB_USERNAME/cafe-webapp/settings/pages`
+2. Under **Source**, choose **Deploy from a branch**.
+3. Select branch `gh-pages` and folder `/ (root)`.
 4. Click **Save**.
-5. Wait ~60 seconds, then refresh the page.
-6. You will see: *"Your site is live at https://YOUR_GITHUB_USERNAME.github.io/sunset-cafe-site/"*
+5. Wait ~60 seconds and refresh.
 
 ## Step 4 — Your public URLs
 
 After Pages is enabled:
 
-- **Website URL:** `https://YOUR_GITHUB_USERNAME.github.io/sunset-cafe-site/`
-- **Privacy Policy URL:** `https://YOUR_GITHUB_USERNAME.github.io/sunset-cafe-site/privacy-policy.html`
+- **Website URL:** `https://YOUR_GITHUB_USERNAME.github.io/cafe-webapp/`
+- **Privacy Policy URL:** `https://YOUR_GITHUB_USERNAME.github.io/cafe-webapp/privacy-policy.html`
 
-Use these in Google Play Console.
+Use the privacy policy URL in Google Play Console.
 
 ## Step 5 — Update Play listing docs
 
