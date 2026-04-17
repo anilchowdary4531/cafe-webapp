@@ -36,8 +36,8 @@ const menuCreateSchema = z.object({
 const orderCreateSchema = z.object({
   table: z.string().min(1),
   note: z.string().optional(),
-  customerPhone: z.string().regex(/^\d{10,15}$/),
-  customerPhoneMasked: z.string().min(1),
+  customerPhone: z.string().regex(/^\d{10,15}$/).optional(),
+  customerPhoneMasked: z.string().optional(),
   customerEmail: z.string().email().optional(),
   phoneVerifiedAt: z.string().datetime().optional(),
   items: z.array(z.object({
@@ -76,6 +76,11 @@ const otpVerifySchema = z.object({
 
 const paymentStatusSchema = z.object({
   status: z.enum(['unpaid', 'paid'])
+});
+
+const loginSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1)
 });
 
 function asMoney(value: number): Prisma.Decimal {
@@ -243,6 +248,16 @@ app.register(cors, {
 
 app.get('/health', async () => ({ ok: true }));
 
+app.post('/api/auth/login', async (request, reply) => {
+  const payload = loginSchema.parse(request.body);
+  const user = await prisma.user.findUnique({ where: { username: payload.username } });
+  if (!user || user.password !== payload.password) {
+    reply.code(401);
+    return { error: 'Invalid credentials' };
+  }
+  return { id: user.id, username: user.username, role: user.role };
+});
+
 app.get('/api/menu', async () => {
   const menu = await prisma.menuItem.findMany({ orderBy: { id: 'asc' } });
   return menu.map((item) => ({
@@ -255,7 +270,7 @@ app.get('/api/menu', async () => {
   }));
 });
 
-app.post('/api/menu', async (request, reply) => {
+app.post('/api/menu', { preHandler: authenticate }, async (request, reply) => {
   const payload = menuCreateSchema.parse(request.body);
   const created = await prisma.menuItem.create({
     data: {
@@ -275,7 +290,7 @@ app.post('/api/menu', async (request, reply) => {
   };
 });
 
-app.delete('/api/menu/:id', async (request, reply) => {
+app.delete('/api/menu/:id', { preHandler: authenticate }, async (request, reply) => {
   const id = parseId((request.params as { id: string }).id);
   if (!id) {
     reply.code(400);
@@ -287,7 +302,7 @@ app.delete('/api/menu/:id', async (request, reply) => {
   return null;
 });
 
-app.get('/api/orders', async (request) => {
+app.get('/api/orders', { preHandler: authenticate }, async (request) => {
   const query = request.query as { table?: string };
   const orders = await prisma.order.findMany({
     where: query.table ? { tableLabel: query.table } : undefined,
@@ -328,29 +343,32 @@ app.post('/api/orders', async (request, reply) => {
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
 
+  const data: any = {
+    tableLabel: payload.table,
+    note: payload.note,
+    status: 'received',
+    paymentStatus: 'unpaid',
+    subtotal: asMoney(subtotal),
+    tax: asMoney(tax),
+    total: asMoney(total),
+    customerEmail: payload.customerEmail || null,
+    phoneVerifiedAt: payload.phoneVerifiedAt ? new Date(payload.phoneVerifiedAt) : null,
+    items: {
+      create: payload.items.map((item) => ({
+        menuItemId: item.menuItemId,
+        name: item.name,
+        quantity: item.qty,
+        unitPrice: item.price === undefined ? null : asMoney(item.price),
+        restricted: item.restricted
+      }))
+    }
+  };
+
+  if (payload.customerPhone) data.customerPhone = payload.customerPhone;
+  if (payload.customerPhoneMasked) data.customerPhoneMasked = payload.customerPhoneMasked;
+
   const created = await prisma.order.create({
-    data: {
-      tableLabel: payload.table,
-      note: payload.note,
-      status: 'received',
-      paymentStatus: 'unpaid',
-      subtotal: asMoney(subtotal),
-      tax: asMoney(tax),
-      total: asMoney(total),
-      customerPhone: payload.customerPhone,
-      customerPhoneMasked: payload.customerPhoneMasked,
-      customerEmail: payload.customerEmail,
-      phoneVerifiedAt: payload.phoneVerifiedAt ? new Date(payload.phoneVerifiedAt) : new Date(),
-      items: {
-        create: payload.items.map((item) => ({
-          menuItemId: item.menuItemId,
-          name: item.name,
-          quantity: item.qty,
-          unitPrice: item.price === undefined ? null : asMoney(item.price),
-          restricted: item.restricted
-        }))
-      }
-    },
+    data,
     include: { items: true }
   });
 
@@ -377,7 +395,7 @@ app.post('/api/orders', async (request, reply) => {
   };
 });
 
-app.patch('/api/orders/:id/status', async (request) => {
+app.patch('/api/orders/:id/status', { preHandler: authenticate }, async (request) => {
   const params = request.params as { id: string };
   const body = z.object({ status: z.enum(['received', 'preparing', 'served']) }).parse(request.body);
   const updated = await prisma.order.update({
@@ -388,7 +406,7 @@ app.patch('/api/orders/:id/status', async (request) => {
   return updated;
 });
 
-app.patch('/api/orders/:id/payment', async (request) => {
+app.patch('/api/orders/:id/payment', { preHandler: authenticate }, async (request) => {
   const params = request.params as { id: string };
   const body = paymentStatusSchema.parse(request.body);
   const updated = await prisma.order.update({
@@ -402,7 +420,7 @@ app.patch('/api/orders/:id/payment', async (request) => {
   return updated;
 });
 
-app.get('/api/requests', async () => {
+app.get('/api/requests', { preHandler: authenticate }, async () => {
   const requests = await prisma.serviceRequest.findMany({ orderBy: { createdAt: 'desc' } });
   return requests.map((request) => ({
     id: request.id,
@@ -437,7 +455,7 @@ app.post('/api/requests', async (request, reply) => {
   return created;
 });
 
-app.patch('/api/requests/:id/status', async (request) => {
+app.patch('/api/requests/:id/status', { preHandler: authenticate }, async (request) => {
   const params = request.params as { id: string };
   const body = z.object({ status: z.enum(['pending', 'completed']) }).parse(request.body);
   return prisma.serviceRequest.update({
@@ -446,7 +464,7 @@ app.patch('/api/requests/:id/status', async (request) => {
   });
 });
 
-app.delete('/api/requests/completed', async () => {
+app.delete('/api/requests/completed', { preHandler: authenticate }, async () => {
   const result = await prisma.serviceRequest.deleteMany({ where: { status: 'completed' } });
   return { deleted: result.count };
 });
@@ -598,11 +616,4 @@ process.on('SIGINT', () => {
 process.on('SIGTERM', () => {
   void shutdown();
 });
-
-
-
-
-
-
-
 

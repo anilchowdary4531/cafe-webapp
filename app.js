@@ -601,7 +601,7 @@ async function bootstrapCustomerApp() {
     customerPhoneInput.value = challenge?.phone || session?.phone || profileState.phone || customerPhoneInput.value;
     otpInput.value = '';
     setOtpError('');
-    setOtpDemoMessage(challenge ? `Demo OTP for ${maskPhoneNumber(challenge.phone)}: ${challenge.code}` : '');
+    setOtpDemoMessage(challenge ? `Demo OTP for ${maskPhoneNumber(challenge.phone)}: ${challenge.code}` : 'Use test phone: 9999999999 with OTP: 123456');
     verifyOtpBtn.textContent = pendingOrderAfterOtp ? 'Verify & Place Order' : 'Verify Phone';
     otpModal.classList.remove('hidden');
     updateOtpMeta();
@@ -656,7 +656,12 @@ async function bootstrapCustomerApp() {
         cooldownUntil: new Date(apiChallenge.cooldownUntil).getTime()
       });
     } catch (_error) {
-      code = String(Math.floor(100000 + Math.random() * 900000));
+      // Use test credentials for Google Play reviewers
+      if (phone === '9999999999') {
+        code = '123456';
+      } else {
+        code = String(Math.floor(100000 + Math.random() * 900000));
+      }
       saveOtpChallenge({
         phone,
         code,
@@ -921,16 +926,10 @@ async function bootstrapCustomerApp() {
 
   async function finalizeOrder() {
     const customerSession = getCustomerSession();
-    if (!customerSession?.phone) {
-      pendingOrderAfterOtp = true;
-      openOtpModal();
-      return;
-    }
-
     const now = new Date();
     const regularItems = cart.filter((x) => !x.restricted);
     const restrictedItems = cart.filter((x) => x.restricted);
-    const maskedPhone = maskPhoneNumber(customerSession.phone);
+    const maskedPhone = customerSession?.phone ? maskPhoneNumber(customerSession.phone) : '';
 
     let orderSyncedToApi = true;
     let requestSyncedToApi = true;
@@ -939,10 +938,10 @@ async function bootstrapCustomerApp() {
       orderSyncedToApi = await createOrderWithFallback({
          table: activeTable,
          note: orderNote.value.trim(),
-         customerPhone: customerSession.phone,
-         customerPhoneMasked: maskedPhone,
+         customerPhone: customerSession?.phone || undefined,
+         customerPhoneMasked: maskedPhone || undefined,
          customerEmail: profileState.email || undefined,
-         phoneVerifiedAt: customerSession.verifiedAt || now.toISOString(),
+         phoneVerifiedAt: customerSession?.verifiedAt || undefined,
          items: regularItems.map((item) => ({
            menuItemId: typeof item.id === 'number' ? item.id : undefined,
            name: item.name,
@@ -961,9 +960,9 @@ async function bootstrapCustomerApp() {
            ? `Customer requested ${restrictedItems[0].name}. Manual approval and age verification required.`
            : 'Customer requested restricted items. Manual approval and age verification required.',
          items: restrictedItems.map(({ id, name, qty }) => ({ id, name, qty })),
-         customerPhone: customerSession.phone,
-         customerPhoneMasked: maskedPhone,
-         phoneVerifiedAt: customerSession.verifiedAt || now.toISOString()
+         customerPhone: customerSession?.phone || undefined,
+         customerPhoneMasked: maskedPhone || undefined,
+         phoneVerifiedAt: customerSession?.verifiedAt || undefined
        });
      }
 
@@ -988,7 +987,8 @@ async function bootstrapCustomerApp() {
   async function placeOrder() {
     if (!validateOrder()) return;
 
-    if (!getCustomerSession()?.phone) {
+    const session = getCustomerSession();
+    if (!session?.phone) {
       pendingOrderAfterOtp = true;
       openOtpModal();
       return;
@@ -1150,6 +1150,7 @@ async function bootstrapCustomerApp() {
       if (e.key === 'Enter' || e.key === ' ') floatingCartBar.click();
     });
   }
+
 
   renderTabs();
   renderMenu();

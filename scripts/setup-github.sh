@@ -7,7 +7,6 @@ set -euo pipefail
 
 GITHUB_USERNAME="${1:-anilchowdary4531}"
 MAIN_REPO="cafe-webapp"
-SITE_REPO="sunset-cafe-site"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -69,12 +68,12 @@ echo ""
 echo "▶ Step 2: Create GitHub repos (do this manually if not done):"
 echo "   → https://github.com/new"
 echo "   Repo 1: $MAIN_REPO (private ok)"
-echo "   Repo 2: $SITE_REPO (must be PUBLIC for GitHub Pages)"
+echo "   Use the same repo for app code and GitHub Pages"
 echo ""
 
-read -p "   Have you created both repos? (y/n): " created
+read -p "   Have you created repo '$MAIN_REPO'? (y/n): " created
 if [ "$created" != "y" ]; then
-  echo "   Create them first at https://github.com/new then re-run this script."
+  echo "   Create it first at https://github.com/new then re-run this script."
   exit 1
 fi
 
@@ -89,39 +88,35 @@ fi
 git push -u origin main
 echo "  ✅ Main repo pushed: https://github.com/$GITHUB_USERNAME/$MAIN_REPO"
 
-# ── 3. Push play-site to separate repo ──────────────────────────────────────
+# ── 3. Publish play-site to gh-pages branch in same repo ───────────────────
 echo ""
-echo "▶ Step 4: Publishing play-site to GitHub Pages..."
+echo "▶ Step 4: Publishing play-site to GitHub Pages branch (gh-pages)..."
 cp -R "$PLAY_SITE_SOURCE/." "$PLAY_SITE_TEMP/"
 cd "$PLAY_SITE_TEMP"
 
 git init
-git checkout -B main
+git checkout -B gh-pages
 git config user.email "anilchowdarya8@gmail.com"
 git config user.name "Anil Chowdary"
 
 git add -A
 git commit -m "Add Sunset Cafe website and privacy policy"
 
-if git remote get-url origin >/dev/null 2>&1; then
-  git remote set-url origin "git@github.com:$GITHUB_USERNAME/$SITE_REPO.git"
-else
-  git remote add origin "git@github.com:$GITHUB_USERNAME/$SITE_REPO.git"
-fi
-git push -u origin main --force
-echo "  ✅ Site pushed: https://github.com/$GITHUB_USERNAME/$SITE_REPO"
+git remote add origin "git@github.com:$GITHUB_USERNAME/$MAIN_REPO.git"
+git push -u origin gh-pages --force
+echo "  ✅ Site branch pushed: https://github.com/$GITHUB_USERNAME/$MAIN_REPO (gh-pages)"
 
 echo ""
 echo "======================================================"
 echo " ✅ ALL DONE! Next steps:"
 echo ""
 echo " 1. Enable GitHub Pages:"
-echo "    https://github.com/$GITHUB_USERNAME/$SITE_REPO/settings/pages"
-echo "    → Source: Deploy from branch → main → / (root) → Save"
+echo "    https://github.com/$GITHUB_USERNAME/$MAIN_REPO/settings/pages"
+echo "    → Source: Deploy from branch → gh-pages → / (root) → Save"
 echo ""
 echo " 2. Your URLs (live in ~60 seconds):"
-echo "    Website:       https://$GITHUB_USERNAME.github.io/$SITE_REPO/"
-echo "    Privacy Policy: https://$GITHUB_USERNAME.github.io/$SITE_REPO/privacy-policy.html"
+echo "    Website:        https://$GITHUB_USERNAME.github.io/$MAIN_REPO/"
+echo "    Privacy Policy: https://$GITHUB_USERNAME.github.io/$MAIN_REPO/privacy-policy.html"
 echo ""
 echo " 3. Next: Deploy backend to Railway"
 echo "    https://railway.app → New Project → Deploy from GitHub"

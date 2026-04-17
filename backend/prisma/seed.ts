@@ -18,15 +18,33 @@ const defaultMenu = [
   { name: 'Cigarette Request', category: 'Cigarettes', price: 0, description: 'Staff approval required', restricted: true }
 ];
 
+const defaultUsers = [
+  { username: 'admin', password: 'admin123', role: 'admin' as const },
+  { username: 'staff', password: 'staff123', role: 'staff' as const },
+  { username: 'survetraadmintest@gmail.com', password: 'survetra@123', role: 'admin' as const }
+];
+
 async function main() {
-  const existingCount = await prisma.menuItem.count();
-  if (existingCount > 0) {
-    console.log('Seed skipped: menu already has data.');
-    return;
+  const existingMenuCount = await prisma.menuItem.count();
+  if (existingMenuCount === 0) {
+    await prisma.menuItem.createMany({ data: defaultMenu });
+    console.log(`Seeded ${defaultMenu.length} menu items.`);
   }
 
-  await prisma.menuItem.createMany({ data: defaultMenu });
-  console.log(`Seeded ${defaultMenu.length} menu items.`);
+  const existingUserCount = await prisma.user.count();
+  if (existingUserCount === 0) {
+    await prisma.user.createMany({ data: defaultUsers });
+    console.log(`Seeded ${defaultUsers.length} users.`);
+  } else {
+    // Check and add individual users if they don't exist
+    for (const user of defaultUsers) {
+      const existingUser = await prisma.user.findUnique({ where: { username: user.username } });
+      if (!existingUser) {
+        await prisma.user.create({ data: user });
+        console.log(`Added user: ${user.username}`);
+      }
+    }
+  }
 }
 
 main()
@@ -37,4 +55,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

@@ -23,6 +23,20 @@ enum RequestStatus {
   completed
 }
 
+enum UserRole {
+  admin
+  staff
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  username String   @unique
+  password String
+  role     UserRole @default(staff)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model MenuItem {
   id          Int       @id @default(autoincrement())
   name        String
@@ -44,8 +58,8 @@ model Order {
   subtotal            Decimal     @db.Decimal(10, 2)
   tax                 Decimal     @db.Decimal(10, 2)
   total               Decimal     @db.Decimal(10, 2)
-  customerPhone       String
-  customerPhoneMasked String
+  customerPhone       String?
+  customerPhoneMasked String?
   customerEmail       String?
   phoneVerifiedAt     DateTime?
   paidAt              DateTime?
@@ -106,5 +120,3 @@ model OtpChallenge {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
-
-
