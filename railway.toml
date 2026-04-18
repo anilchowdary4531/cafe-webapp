@@ -1,0 +1,80 @@
+# Railway Configuration for Cafe Webapp
+# This file helps Railway understand how to deploy your services
+
+# Service: cafe-backend (Node.js)
+[cafe-backend]
+source = "backend"
+buildCommand = "npm run build"
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Environment variables for Node.js backend
+[cafe-backend.env]
+NODE_ENV = "production"
+PORT = "3000"
+
+# Service: cafe-spring-backend (Spring Boot)
+[cafe-spring-backend]
+source = "backend-spring"
+buildCommand = "./mvnw clean package -DskipTests"
+startCommand = "java -jar target/*.jar"
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Environment variables for Spring backend
+[cafe-spring-backend.env]
+SPRING_PROFILES_ACTIVE = "prod"
+SERVER_PORT = "4100"
+
+# Shared environment variables (applied to all services)
+[[env]]
+key = "DATABASE_URL"
+value = "${{ RAILWAY_DATABASE_URL }}"
+
+[[env]]
+key = "JWT_SECRET"
+generate = "string"
+length = 32
+
+[[env]]
+key = "EMAIL_USER"
+value = "${{ EMAIL_USER }}"
+
+[[env]]
+key = "EMAIL_PASS"
+value = "${{ EMAIL_PASS }}"
+
+[[env]]
+key = "TWILIO_ACCOUNT_SID"
+value = "${{ TWILIO_ACCOUNT_SID }}"
+
+[[env]]
+key = "TWILIO_AUTH_TOKEN"
+value = "${{ TWILIO_AUTH_TOKEN }}"
+
+[[env]]
+key = "TWILIO_PHONE_NUMBER"
+value = "${{ TWILIO_PHONE_NUMBER }}"
+
+# Database configuration
+[database]
+type = "postgresql"
+version = "15"
+
+# Networking
+[[tcpProxy]]
+applicationPort = 3000
+service = "cafe-backend"
+
+[[tcpProxy]]
+applicationPort = 4100
+service = "cafe-spring-backend"
+
+# Domains (configure in Railway dashboard)
+# api.cafe-webapp.com -> cafe-backend
+# admin-api.cafe-webapp.com -> cafe-spring-backend

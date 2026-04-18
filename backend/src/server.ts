@@ -10,6 +10,35 @@ import { z } from 'zod';
 const prisma = new PrismaClient();
 const app = Fastify({ logger: true });
 
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+// Simple JWT authentication function
+async function authenticate(request: any, reply: any) {
+  const authHeader = request.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    reply.code(401);
+    return { error: 'No token provided' };
+  }
+
+  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+  try {
+    // For simplicity, we'll use a basic token check
+    // In production, you'd want proper JWT verification
+    if (token !== JWT_SECRET) {
+      reply.code(401);
+      return { error: 'Invalid token' };
+    }
+
+    // You could add more sophisticated auth here
+    // For now, any valid token passes
+  } catch (error) {
+    reply.code(401);
+    return { error: 'Invalid token' };
+  }
+}
+
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 const OTP_RESEND_COOLDOWN_MS = 30 * 1000;
 const smtpPort = Number.parseInt(process.env.SMTP_PORT ?? '587', 10);

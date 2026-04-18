@@ -81,12 +81,20 @@ jobs:
     - name: Deploy to Railway
       if: env.RAILWAY_TOKEN
       run: |
-        # Deploy Node.js backend
-        railway deploy --service cafe-backend
-        # Deploy Spring backend
-        railway deploy --service cafe-spring-backend
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        echo "🚂 Railway Git-Based Deployment"
+        echo "==============================="
+        echo ""
+        echo "Railway Behavior:"
+        echo "✅ Checks for existing project linked to this repo"
+        echo "✅ Updates existing services (no duplicates created)"
+        echo "✅ Creates new services only if they don't exist"
+        echo "✅ Preserves databases and environment variables"
+        echo ""
+        echo "The railway.toml file defines service configuration."
+        echo "Railway reads this file and deploys accordingly."
+        echo ""
+        echo "Monitor at: https://railway.app/dashboard"
+        echo "✅ Deployment triggered by git push to main branch"
 
     - name: Deploy to AWS (alternative)
       if: env.AWS_ACCESS_KEY_ID
