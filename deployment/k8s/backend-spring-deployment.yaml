@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cafe-backend-spring
+  labels:
+    app: cafe-backend-spring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cafe-backend-spring
+  template:
+    metadata:
+      labels:
+        app: cafe-backend-spring
+    spec:
+      containers:
+      - name: cafe-backend-spring
+        image: cafe-spring-backend:latest
+        ports:
+        - containerPort: 4100
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "k8s"
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            secretKeyRef:
+              name: cafe-secrets
+              key: spring-datasource-url
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 4100
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 4100
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cafe-backend-spring-service
+spec:
+  selector:
+    app: cafe-backend-spring
+  ports:
+  - port: 4100
+    targetPort: 4100
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cafe-backend-spring-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: admin-api.cafe-webapp.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cafe-backend-spring-service
+            port:
+              number: 4100

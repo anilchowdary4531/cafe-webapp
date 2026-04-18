@@ -1,0 +1,99 @@
+name: Deploy Web Application
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'index.html'
+      - 'app.js'
+      - 'admin.js'
+      - 'staff.js'
+      - 'data.js'
+      - 'styles.css'
+      - 'backend/**'
+      - 'backend-spring/**'
+      - 'deployment/**'
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        npm ci
+
+    - name: Run backend tests
+      run: |
+        cd backend
+        npm run build
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Test Spring backend
+      run: |
+        cd backend-spring
+        mvn test
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Build backend Docker image
+      run: |
+        cd backend
+        docker build -t cafe-backend:${{ github.sha }} .
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Build Spring backend Docker image
+      run: |
+        cd backend-spring
+        docker build -t cafe-spring-backend:${{ github.sha }} .
+
+    - name: Deploy to Railway
+      if: env.RAILWAY_TOKEN
+      run: |
+        # Deploy Node.js backend
+        railway deploy --service cafe-backend
+        # Deploy Spring backend
+        railway deploy --service cafe-spring-backend
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+    - name: Deploy to AWS (alternative)
+      if: env.AWS_ACCESS_KEY_ID
+      run: |
+        # AWS deployment commands would go here
+        echo "Deploying to AWS..."
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}

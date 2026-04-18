@@ -1,0 +1,138 @@
+name: Build and Release Desktop App
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'desktop/**'
+      - 'index.html'
+      - 'app.js'
+      - 'admin.js'
+      - 'staff.js'
+      - 'data.js'
+      - 'styles.css'
+  release:
+    types: [published]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: desktop/package-lock.json
+
+    - name: Install desktop dependencies
+      run: |
+        cd desktop
+        npm ci
+
+    - name: Copy web assets
+      run: |
+        Copy-Item -Path "index.html","app.js","admin.js","staff.js","data.js","styles.css" -Destination "desktop/" -Force
+
+    - name: Build Windows installer
+      run: |
+        cd desktop
+        npm run build:win
+
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-installer
+        path: desktop/dist/*.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: desktop/package-lock.json
+
+    - name: Install desktop dependencies
+      run: |
+        cd desktop
+        npm ci
+
+    - name: Copy web assets
+      run: |
+        cp index.html app.js admin.js staff.js data.js styles.css desktop/
+
+    - name: Build macOS app
+      run: |
+        cd desktop
+        npm run build:mac
+
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-app
+        path: desktop/dist/*.dmg
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: desktop/package-lock.json
+
+    - name: Install desktop dependencies
+      run: |
+        cd desktop
+        npm ci
+
+    - name: Copy web assets
+      run: |
+        cp index.html app.js admin.js staff.js data.js styles.css desktop/
+
+    - name: Build Linux AppImage
+      run: |
+        cd desktop
+        npm run build:linux
+
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-appimage
+        path: desktop/dist/*.AppImage
+
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-installer
+
+    - name: Download macOS artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: macos-app
+
+    - name: Download Linux artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-appimage
+
+    - name: Create GitHub release assets
+      run: |
+        gh release upload ${{ github.event.release.tag_name }} windows-installer/*.exe macos-app/*.dmg linux-appimage/*.AppImage
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
