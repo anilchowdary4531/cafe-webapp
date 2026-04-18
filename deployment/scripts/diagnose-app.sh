@@ -163,7 +163,7 @@ else
 fi
 
 echo "Testing Spring backend build..."
-if cd ../backend-spring && ./mvnw clean package -DskipTests -q; then
+if cd ../backend-spring && mvn clean package -DskipTests -q; then
     print_status "Spring backend builds successfully"
 else
     print_error "Spring backend build failed"
@@ -186,7 +186,8 @@ elif ! git remote get-url origin &> /dev/null; then
     print_error "No GitHub repository - Railway cannot connect"
     echo "Solution: Push code to GitHub first"
 else
-    print_info "Configuration looks good - issue may be in Railway setup"
+    print_info "✅ All prerequisites met - ready for Railway deployment!"
+    echo "Next: Set up Railway project and push to trigger deployment"
 fi
 
 echo ""
