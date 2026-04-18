@@ -21,7 +21,7 @@ USER cafe
 
 EXPOSE 4100
 
-ENV JAVA_OPTS="-Xms128m -Xmx384m"
+ENV JAVA_OPTS="-Xms128m -Xmx512m"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 
