@@ -124,7 +124,7 @@ function initStaff() {
 
   subscribeConnectionStatus(renderConnectionBanner);
   void refreshApiHealth();
-  window.setInterval(() => { void refreshApiHealth(); }, 30000);
+  createManagedInterval(() => { void refreshApiHealth(); }, 30000);
 
   async function render() {
     featureFlags = await hydrateFeatureFlagsFromApi();

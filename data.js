@@ -26,6 +26,34 @@ const connectionStatus = {
   lastCheckedAt: null
 };
 
+// Global cleanup tracking
+const globalIntervals = new Set();
+const globalListeners = new Set();
+
+// Cleanup function for page unload
+function cleanupGlobalResources() {
+  // Clear all tracked intervals
+  globalIntervals.forEach(intervalId => {
+    if (intervalId) clearInterval(intervalId);
+  });
+  globalIntervals.clear();
+
+  // Clear all tracked listeners
+  globalListeners.forEach(unsubscribe => {
+    if (typeof unsubscribe === 'function') unsubscribe();
+  });
+  globalListeners.clear();
+
+  // Clear connection listeners
+  connectionListeners.clear();
+}
+
+// Register cleanup on page unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', cleanupGlobalResources);
+  window.addEventListener('unload', cleanupGlobalResources);
+}
+
 const defaultMenu = [
   { id: 1, name: 'Veg Sandwich', category: 'Food', price: 5.5, description: 'Fresh grilled sandwich', imageUrl: 'https://loremflickr.com/640/480/veg,sandwich,food?lock=11' },
   { id: 2, name: 'Chicken Burger', category: 'Food', price: 7.9, description: 'Served with sauce', imageUrl: 'https://loremflickr.com/640/480/chicken,burger,food?lock=12' },
@@ -113,7 +141,27 @@ function getConnectionStatus() {
 function subscribeConnectionStatus(listener) {
   connectionListeners.add(listener);
   listener(getConnectionStatus());
-  return () => connectionListeners.delete(listener);
+  const unsubscribe = () => connectionListeners.delete(listener);
+
+  // Track for global cleanup
+  globalListeners.add(unsubscribe);
+
+  return unsubscribe;
+}
+
+// Managed interval function that tracks for cleanup
+function createManagedInterval(callback, delay) {
+  const intervalId = setInterval(callback, delay);
+  globalIntervals.add(intervalId);
+  return intervalId;
+}
+
+// Function to clear managed intervals
+function clearManagedInterval(intervalId) {
+  if (intervalId) {
+    clearInterval(intervalId);
+    globalIntervals.delete(intervalId);
+  }
 }
 
 async function refreshApiHealth() {
@@ -286,6 +334,7 @@ async function deleteMenuItemWithFallback(id) {
 
 function saveMenu(menu) {
   localStorage.setItem(STORAGE_KEYS.menu, JSON.stringify(menu));
+  clearMemoCache(); // Clear cache when menu data changes
 }
 
 function loadFeatureFlags() {
@@ -472,6 +521,7 @@ async function updateOrderPaymentWithFallback(id, status) {
 
 function saveOrders(orders) {
   localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(orders));
+  clearMemoCache(); // Clear cache when orders data changes
 }
 function loadRequests() {
   return JSON.parse(localStorage.getItem(STORAGE_KEYS.requests) || '[]');
@@ -661,4 +711,38 @@ const inrFormatter = new Intl.NumberFormat('en-IN', {
 
 function currency(n) {
   return inrFormatter.format(Number(n) || 0);
+}
+
+// Debounce utility for performance optimization
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Memoization cache for expensive operations
+const memoCache = new Map();
+
+// Memoize function for performance optimization
+function memoize(fn, keyFn = (...args) => JSON.stringify(args)) {
+  return (...args) => {
+    const key = keyFn(args);
+    if (memoCache.has(key)) {
+      return memoCache.get(key);
+    }
+    const result = fn(...args);
+    memoCache.set(key, result);
+    return result;
+  };
+}
+
+// Clear memo cache when data changes
+function clearMemoCache() {
+  memoCache.clear();
 }

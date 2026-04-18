@@ -108,7 +108,7 @@ async function bootstrapAdmin() {
 
   subscribeConnectionStatus(renderConnectionBanner);
   void refreshApiHealth();
-  window.setInterval(() => { void refreshApiHealth(); }, 30000);
+  createManagedInterval(() => { void refreshApiHealth(); }, 30000);
 
   function updateAuthStatus() {
     const hasToken = Boolean(getAdminAccessToken());

@@ -414,6 +414,9 @@ async function bootstrapCustomerApp() {
     return nonVegPattern.test(text) ? { label: 'Non-Veg', className: 'nonveg' } : { label: 'Veg', className: 'veg' };
   }
 
+  // Memoized version for better performance
+  const getMemoizedFoodType = memoize(getFoodType, (item) => `foodType_${item.id || item.name}`);
+
   function getItemOrderCounts() {
     return loadOrders().reduce((counts, order) => {
       const items = Array.isArray(order.items) ? order.items : [];
@@ -428,6 +431,9 @@ async function bootstrapCustomerApp() {
       return counts;
     }, {});
   }
+
+  // Memoized version for better performance
+  const getMemoizedItemOrderCounts = memoize(getItemOrderCounts, () => 'itemOrderCounts');
 
   function matchesCustomerOrderFilter(order, filterKey) {
     if (filterKey === 'all') return true;
@@ -461,7 +467,7 @@ async function bootstrapCustomerApp() {
   }
   subscribeConnectionStatus(renderConnectionBanner);
   void refreshApiHealth();
-  window.setInterval(() => { void refreshApiHealth(); }, 30000);
+  createManagedInterval(() => { void refreshApiHealth(); }, 30000);
 
   function normalizePhoneNumber(value) {
     return value.replace(/\D/g, '');
@@ -787,7 +793,7 @@ async function bootstrapCustomerApp() {
 
   function renderMenu() {
     const q = searchInput.value.trim().toLowerCase();
-    const orderCounts = getItemOrderCounts();
+    const orderCounts = getMemoizedItemOrderCounts();
     const list = getVisibleMenuItems().filter((item) => {
       const matchCategory = activeCategory === 'All' || item.category === activeCategory;
       const matchSearch = !q || item.name.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q);
@@ -803,7 +809,7 @@ async function bootstrapCustomerApp() {
     list.forEach((item) => {
       const card = document.createElement('div');
       card.className = 'card menu-card';
-      const foodType = getFoodType(item);
+      const foodType = getMemoizedFoodType(item);
       const imageSrc = getMenuItemImageUrl(item);
       const fallbackSrc = getMenuItemFallbackImage(item);
       const itemOrderCount = orderCounts[String(item.id)] || orderCounts[item.name] || 0;
@@ -1069,7 +1075,11 @@ async function bootstrapCustomerApp() {
     console.info('[CafeApp][table] Table data loaded', { table: activeTable });
      window.scrollTo({ top: document.body.scrollHeight * 0.1, behavior: 'smooth' });
   };
-  searchInput.oninput = renderMenu;
+
+  // Use debounced search for better performance
+  const debouncedRenderMenu = debounce(renderMenu, 300);
+  searchInput.oninput = debouncedRenderMenu;
+
   placeOrderBtn.onclick = () => { void placeOrder(); };
   requestWaiterBtn.onclick = () => { void pushServiceRequest('Call Waiter'); };
   requestBillBtn.onclick = () => { void pushServiceRequest('Request Bill'); };
