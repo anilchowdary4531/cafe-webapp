@@ -10,6 +10,9 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,11 +31,16 @@ public class OrderController {
   }
 
   @GetMapping
-  public List<CafeOrder> list(@RequestParam(required = false) String table) {
+  public Page<CafeOrder> list(
+      @RequestParam(required = false) String table,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size) {
     if (table != null && !table.isBlank()) {
-      return orderRepository.findByTableLabelOrderByCreatedAtDesc(table);
+      return orderRepository.findByTableLabelOrderByCreatedAtDesc(
+          table, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
     }
-    return orderRepository.findAllByOrderByCreatedAtDesc();
+    return orderRepository.findAllByOrderByCreatedAtDesc(
+        PageRequest.of(page, size));
   }
 
   @PostMapping
