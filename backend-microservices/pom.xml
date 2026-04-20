@@ -40,6 +40,9 @@
     <module>api-gateway</module>
     <module>user-service</module>
     <module>menu-service</module>
+    <module>order-service</module>
+    <module>notification-service</module>
+    <module>admin-service</module>
   </modules>
 
   <build>
