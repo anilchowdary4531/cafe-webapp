@@ -1,32 +1,21 @@
 package com.cafe.auth.security;
 
-import com.cafe.auth.model.AppUser;
-import com.cafe.auth.repo.AppUserRepository;
-import com.cafe.auth.service.EmailRoleResolver;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.List;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component
+import java.io.IOException;
+
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
   private final JwtService jwtService;
   private final AppUserRepository appUserRepository;
   private final EmailRoleResolver emailRoleResolver;
-
-  public JwtAuthenticationFilter(JwtService jwtService, AppUserRepository appUserRepository, EmailRoleResolver emailRoleResolver) {
-    this.jwtService = jwtService;
-    this.appUserRepository = appUserRepository;
-    this.emailRoleResolver = emailRoleResolver;
-  }
 
   @Override
   protected void doFilterInternal(HttpServletRequest request,
@@ -34,11 +23,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                   FilterChain filterChain)
           throws ServletException, IOException {
 
-    String path = request.getServletPath(); // ✅ ADD THIS
+    String path = request.getServletPath();
 
-    String authHeader = request.getHeader("Authorization");
-
-    // ✅ Skip public APIs
+    // ✅ Skip public endpoints
     if (path.startsWith("/api/auth") ||
             path.startsWith("/api/menu") ||
             path.equals("/health") ||
@@ -48,6 +35,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       return;
     }
 
+    // No token → just continue
+    String authHeader = request.getHeader("Authorization");
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
       filterChain.doFilter(request, response);
       return;
@@ -55,19 +44,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     try {
       String token = authHeader.substring(7);
-      Claims claims = jwtService.parseClaims(token);
+      var claims = jwtService.parseClaims(token);
       String email = claims.getSubject();
 
-      AppUser user = appUserRepository.findByEmail(email).orElse(null);
+      var user = appUserRepository.findByEmail(email).orElse(null);
 
       if (user != null) {
-        String resolvedRole = emailRoleResolver.resolveRole(user.getRole());
+        var role = emailRoleResolver.resolveRole(user.getRole());
 
-        var authorities = List.of(
-                new SimpleGrantedAuthority("ROLE_" + resolvedRole)
+        var authorities = java.util.List.of(
+                new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role)
         );
 
-        var auth = new UsernamePasswordAuthenticationToken(
+        var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                 user, null, authorities
         );
 
@@ -78,6 +67,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     filterChain.doFilter(request, response);
   }
-
 }
-
