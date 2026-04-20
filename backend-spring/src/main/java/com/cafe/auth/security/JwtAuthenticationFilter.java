@@ -22,48 +22,62 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final AppUserRepository appUserRepository;
   private final EmailRoleResolver emailRoleResolver;
 
-  public JwtAuthenticationFilter(
-      JwtService jwtService,
-      AppUserRepository appUserRepository,
-      EmailRoleResolver emailRoleResolver) {
+  public JwtAuthenticationFilter(JwtService jwtService, AppUserRepository appUserRepository, EmailRoleResolver emailRoleResolver) {
     this.jwtService = jwtService;
     this.appUserRepository = appUserRepository;
     this.emailRoleResolver = emailRoleResolver;
   }
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-      throws ServletException, IOException {
+  protected void doFilterInternal(HttpServletRequest request,
+                                  HttpServletResponse response,
+                                  FilterChain filterChain)
+          throws ServletException, IOException {
+
+    String path = request.getServletPath(); // ✅ ADD THIS
+
     String authHeader = request.getHeader("Authorization");
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      filterChain.doFilter(request, response);
-      return;
-    }
+
+    // ✅ Skip public APIs
     if (path.startsWith("/api/auth") ||
             path.startsWith("/api/menu") ||
             path.equals("/health") ||
             path.startsWith("/actuator")) {
 
       filterChain.doFilter(request, response);
-
+      return;
     }
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+      filterChain.doFilter(request, response);
+      return;
+    }
+
     try {
       String token = authHeader.substring(7);
       Claims claims = jwtService.parseClaims(token);
       String email = claims.getSubject();
+
       AppUser user = appUserRepository.findByEmail(email).orElse(null);
+
       if (user != null) {
         String resolvedRole = emailRoleResolver.resolveRole(user.getRole());
-        user.setRole(resolvedRole);
-        var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + resolvedRole));
-        var auth = new UsernamePasswordAuthenticationToken(user, null, authorities);
+
+        var authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_" + resolvedRole)
+        );
+
+        var auth = new UsernamePasswordAuthenticationToken(
+                user, null, authorities
+        );
+
         SecurityContextHolder.getContext().setAuthentication(auth);
       }
-    } catch (Exception ignored) {
-      // Let request continue unauthenticated.
-    }
+
+    } catch (Exception ignored) {}
 
     filterChain.doFilter(request, response);
   }
+
 }
 
