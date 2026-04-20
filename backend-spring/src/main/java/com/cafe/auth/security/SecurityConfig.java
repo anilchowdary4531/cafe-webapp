@@ -35,14 +35,12 @@ public class SecurityConfig {
                 "/error",
                 "/health",
                 "/actuator/health",
+                "/api/menu/**",
                 "/api/auth/**",
-                "/api/menu",
-                "/api/orders",
-                "/api/orders/**",
-                "/api/requests",
-                "/api/requests/**",
-                "/api/admin/tax-slabs/active"
-            ).permitAll()
+                "/api/menu"
+
+
+            ).permitAll().requestMatchers("/api/orders/**").authenticated()
             .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
             .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
             .anyRequest().authenticated())

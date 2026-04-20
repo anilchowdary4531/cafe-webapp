@@ -39,7 +39,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       filterChain.doFilter(request, response);
       return;
     }
+    if (path.startsWith("/api/auth") ||
+            path.startsWith("/api/menu") ||
+            path.equals("/health") ||
+            path.startsWith("/actuator")) {
 
+      filterChain.doFilter(request, response);
+
+    }
     try {
       String token = authHeader.substring(7);
       Claims claims = jwtService.parseClaims(token);
