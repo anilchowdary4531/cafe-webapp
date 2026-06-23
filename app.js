@@ -1,3 +1,6 @@
+  if (continueAsGuestBtn) {
+    continueAsGuestBtn.onclick = () => { void continueAsGuest(); };
+  }
 const script = document.createElement('script');
 script.src = 'data.js';
 script.onload = initCustomerApp;
@@ -70,9 +73,10 @@ async function bootstrapCustomerApp() {
   const mobileTotal = document.getElementById('mobileTotal');
   const mobileViewCartBtn = document.getElementById('mobileViewCartBtn');
   const mobilePlaceOrderBtn = document.getElementById('mobilePlaceOrderBtn');
-  const floatingCartBar = document.getElementById('floatingCartBar');
   const floatingCartCount = document.getElementById('floatingCartCount');
   const floatingCartTotal = document.getElementById('floatingCartTotal');
+  const continueAsGuestBtn = document.getElementById('continueAsGuestBtn');
+  const continueAsGuestBtn = document.getElementById('continueAsGuestBtn');
 
   const OTP_EXPIRY_MS = 5 * 60 * 1000;
   const OTP_RESEND_COOLDOWN_MS = 30 * 1000;
@@ -410,12 +414,10 @@ async function bootstrapCustomerApp() {
 
   function getFoodType(item) {
     const text = `${item.name || ''} ${item.description || ''}`.toLowerCase();
-    const nonVegPattern = /\b(chicken|mutton|fish|prawn|shrimp|egg|beef|pork|meat|nugget)\b/;
-    return nonVegPattern.test(text) ? { label: 'Non-Veg', className: 'nonveg' } : { label: 'Veg', className: 'veg' };
-  }
-
   // Memoized version for better performance
   const getMemoizedFoodType = memoize(getFoodType, (item) => `foodType_${item.id || item.name}`);
+
+  }
 
   function getItemOrderCounts() {
     return loadOrders().reduce((counts, order) => {
@@ -430,16 +432,14 @@ async function bootstrapCustomerApp() {
       });
       return counts;
     }, {});
-  }
-
   // Memoized version for better performance
   const getMemoizedItemOrderCounts = memoize(getItemOrderCounts, () => 'itemOrderCounts');
+
+  }
 
   function matchesCustomerOrderFilter(order, filterKey) {
     if (filterKey === 'all') return true;
     if (filterKey === 'in-progress') return ['received', 'accepted', 'preparing'].includes(order.status);
-    if (filterKey === 'accepted') return order.status === 'accepted';
-    if (filterKey === 'served') return order.status === 'served';
     return true;
   }
 
@@ -482,7 +482,7 @@ async function bootstrapCustomerApp() {
 
   function formatStoredDate(value) {
     if (!value) return '';
-    const date = new Date(value);
+  window.setInterval(() => { void refreshApiHealth(); }, 30000);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
   }
 
@@ -554,11 +554,8 @@ async function bootstrapCustomerApp() {
   function setOtpDemoMessage(message) {
     otpDemoMessage.textContent = message || '';
     otpDemoMessage.classList.toggle('hidden', !message);
-  }
-
-  function stopOtpMetaUpdates() {
-    if (otpMetaIntervalId) {
-      window.clearInterval(otpMetaIntervalId);
+      ? `You are ordering as a guest for ${activeTable}. Phone verification is optional.`
+      : 'You are ordering as a guest. Phone verification is optional.';
       otpMetaIntervalId = null;
     }
   }
@@ -607,15 +604,15 @@ async function bootstrapCustomerApp() {
     customerPhoneInput.value = challenge?.phone || session?.phone || profileState.phone || customerPhoneInput.value;
     otpInput.value = '';
     setOtpError('');
-    setOtpDemoMessage(challenge ? `Demo OTP for ${maskPhoneNumber(challenge.phone)}: ${challenge.code}` : 'Use test phone: 9999999999 with OTP: 123456');
+    setOtpDemoMessage(challenge ? `Demo OTP for ${maskPhoneNumber(challenge.phone)}: ${challenge.code}` : '');
     verifyOtpBtn.textContent = pendingOrderAfterOtp ? 'Verify & Place Order' : 'Verify Phone';
     otpModal.classList.remove('hidden');
-    updateOtpMeta();
+    setOtpDemoMessage(challenge ? `Demo OTP for ${maskPhoneNumber(challenge.phone)}: ${challenge.code}` : 'Use test phone: 9999999999 with OTP: 123456');
     startOtpMetaUpdates();
     window.requestAnimationFrame(() => customerPhoneInput.focus());
   }
 
-  function closeOtpDialog() {
+    setOtpDemoMessage(challenge ? `Demo OTP for ${maskPhoneNumber(challenge.phone)}: ${challenge.code}` : '');
     otpModal.classList.add('hidden');
     otpInput.value = '';
     setOtpError('');
@@ -662,15 +659,15 @@ async function bootstrapCustomerApp() {
         cooldownUntil: new Date(apiChallenge.cooldownUntil).getTime()
       });
     } catch (_error) {
+      code = String(Math.floor(100000 + Math.random() * 900000));
+      saveOtpChallenge({
+        phone,
       // Use test credentials for Google Play reviewers
       if (phone === '9999999999') {
         code = '123456';
       } else {
         code = String(Math.floor(100000 + Math.random() * 900000));
       }
-      saveOtpChallenge({
-        phone,
-        code,
         attempts: 0,
         createdAt: new Date().toISOString(),
         expiresAt: now + OTP_EXPIRY_MS,
@@ -679,15 +676,7 @@ async function bootstrapCustomerApp() {
     }
 
     otpVerificationSection.classList.remove('hidden');
-    otpInput.value = '';
-    setOtpError('');
-    setOtpDemoMessage(`Demo OTP sent to ${maskPhoneNumber(phone)}: ${code}`);
-    updateOtpMeta();
-    startOtpMetaUpdates();
-    otpInput.focus();
-  }
-
-  async function verifyOtpAndContinue() {
+      code = String(Math.floor(100000 + Math.random() * 900000));
     const challenge = getOtpChallenge();
 
     const phone = validatePhoneInput();
@@ -793,7 +782,7 @@ async function bootstrapCustomerApp() {
 
   function renderMenu() {
     const q = searchInput.value.trim().toLowerCase();
-    const orderCounts = getMemoizedItemOrderCounts();
+    const orderCounts = getItemOrderCounts();
     const list = getVisibleMenuItems().filter((item) => {
       const matchCategory = activeCategory === 'All' || item.category === activeCategory;
       const matchSearch = !q || item.name.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q);
@@ -804,12 +793,12 @@ async function bootstrapCustomerApp() {
     if (!list.length) {
       menuGrid.innerHTML = '<div class="card menu-card"><p>No items found.</p></div>';
       return;
-    }
+    const orderCounts = getMemoizedItemOrderCounts();
 
     list.forEach((item) => {
       const card = document.createElement('div');
       card.className = 'card menu-card';
-      const foodType = getMemoizedFoodType(item);
+    const orderCounts = getItemOrderCounts();
       const imageSrc = getMenuItemImageUrl(item);
       const fallbackSrc = getMenuItemFallbackImage(item);
       const itemOrderCount = orderCounts[String(item.id)] || orderCounts[item.name] || 0;
@@ -819,8 +808,8 @@ async function bootstrapCustomerApp() {
           <span class="item-order-count">${itemOrderCount} order${itemOrderCount === 1 ? '' : 's'}</span>
           <span class="food-label ${foodType.className}">${foodType.label}</span>
         </div>
-        <div class="tag">${item.category}</div>
-        <h4>${item.name}</h4>
+      const foodType = getFoodType(item);
+      const foodType = getMemoizedFoodType(item);
         <div class="muted small">${item.description || ''}</div>
         <div class="price">${item.restricted ? 'Manual Approval' : currency(item.price)}</div>
         ${item.restricted ? '<div class="note">Age verification and staff approval required.</div>' : ''}
@@ -994,7 +983,7 @@ async function bootstrapCustomerApp() {
     if (!validateOrder()) return;
 
     const session = getCustomerSession();
-    if (!session?.phone) {
+    if (!session?.phone && !confirm('Continue as guest without phone verification? Orders placed as guest cannot be tracked or contacted.')) {
       pendingOrderAfterOtp = true;
       openOtpModal();
       return;
@@ -1005,7 +994,7 @@ async function bootstrapCustomerApp() {
   }
 
   async function pushServiceRequest(type) {
-    if (!activeTable) {
+    if (!session?.phone) {
       alert('Select a table first.');
       return;
     }
@@ -1014,7 +1003,7 @@ async function bootstrapCustomerApp() {
       table: activeTable,
       type,
       note: `${type} requested by customer.${customerSession?.phone ? ` Verified phone: ${maskPhoneNumber(customerSession.phone)}.` : ''}`,
-      customerPhone: customerSession?.phone || '',
+    if (!session?.phone && !confirm('Continue as guest without phone verification? Orders placed as guest cannot be tracked or contacted.')) {
       customerPhoneMasked: customerSession?.phone ? maskPhoneNumber(customerSession.phone) : '',
       phoneVerifiedAt: customerSession?.verifiedAt || ''
     });
@@ -1075,11 +1064,7 @@ async function bootstrapCustomerApp() {
     console.info('[CafeApp][table] Table data loaded', { table: activeTable });
      window.scrollTo({ top: document.body.scrollHeight * 0.1, behavior: 'smooth' });
   };
-
-  // Use debounced search for better performance
-  const debouncedRenderMenu = debounce(renderMenu, 300);
-  searchInput.oninput = debouncedRenderMenu;
-
+  searchInput.oninput = renderMenu;
   placeOrderBtn.onclick = () => { void placeOrder(); };
   requestWaiterBtn.onclick = () => { void pushServiceRequest('Call Waiter'); };
   requestBillBtn.onclick = () => { void pushServiceRequest('Request Bill'); };
@@ -1088,12 +1073,13 @@ async function bootstrapCustomerApp() {
     ordersModal.classList.remove('hidden');
   };
   closeOrdersModal.onclick = () => ordersModal.classList.add('hidden');
-  ordersModal.onclick = (e) => { if (e.target === ordersModal) ordersModal.classList.add('hidden'); };
-  closeOtpModal.onclick = () => {
-    pendingOrderAfterOtp = false;
-    closeOtpDialog();
+  searchInput.oninput = renderMenu;
   };
-  otpModal.onclick = (e) => {
+
+  // Use debounced search for better performance
+  const debouncedRenderMenu = debounce(renderMenu, 300);
+  searchInput.oninput = debouncedRenderMenu;
+
     if (e.target === otpModal) {
       pendingOrderAfterOtp = false;
       closeOtpDialog();
@@ -1161,10 +1147,33 @@ async function bootstrapCustomerApp() {
     });
   }
 
+  if (continueAsGuestBtn) {
+    continueAsGuestBtn.onclick = () => { void continueAsGuest(); };
+  }
 
   renderTabs();
   renderMenu();
   renderCart();
   renderMobileCartPreview();
   updateCustomerAuthStatus();
+
+  async function continueAsGuest() {
+    if (!activeTable) {
+      alert('Please select a table.');
+      return;
+    const sessions = loadCustomerSessions();
+    delete sessions[activeTable];
+    saveCustomerSessions(sessions);
+
+    updateCustomerAuthStatus();
+    closeOtpDialog();
+
+    if (pendingOrderAfterOtp) {
+      pendingOrderAfterOtp = false;
+      await finalizeOrder();
+      return;
+    }
+
+    alert('Continuing as guest. You can place orders without phone verification.');
+  }
 }

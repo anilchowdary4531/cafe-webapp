@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0f766e" />
-  <title>Cafe Admin</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -17,8 +16,9 @@
       <a href="index.html">Customer</a>
       <a href="staff.html">Staff</a>
       <a href="super-admin.html">Super Admin</a>
-    </div>
   </header>
+    </div>
+
   <div id="connectionBanner" class="connection-banner hidden" role="status" aria-live="polite">
     <span id="connectionBannerText"></span>
     <div class="connection-actions">
@@ -26,20 +26,20 @@
       <button id="connectionDismissBtn" type="button" class="connection-chip" aria-label="Dismiss status">Dismiss</button>
     </div>
   </div>
-
   <main class="page">
+    <section class="grid-two">
     <section class="card section-card">
       <div class="section-head">
         <h2>User Management</h2>
         <button id="refreshUsersBtn" type="button">Refresh Users</button>
-      </div>
-      <p id="adminAuthStatus" class="muted small">Admin login required for secure actions.</p>
-      <form id="adminLoginForm" class="form-grid">
-        <label for="adminEmail" class="sr-only">Admin email</label>
-        <input id="adminEmail" type="email" placeholder="Admin email" required />
-        <label for="adminPassword" class="sr-only">Admin password</label>
-        <input id="adminPassword" type="password" placeholder="Admin password" required />
-        <div class="actions-row">
+            <option value="Food">Food</option>
+            <option value="Snacks">Snacks</option>
+            <option value="Coffee">Coffee</option>
+            <option value="Tea">Tea</option>
+            <option value="Juices">Juices</option>
+            <option value="Ice Cream">Ice Cream</option>
+            <option value="Cigarettes">Cigarettes</option>
+          </select>
           <button class="primary" type="submit">Admin Login</button>
           <button id="adminLogoutBtn" type="button">Logout</button>
         </div>
@@ -63,7 +63,7 @@
       <div id="staffUsersList" class="detail-list"></div>
     </section>
 
-    <section class="card section-card section-spacing">
+    <section class="card" style="margin-top: 20px; padding: 18px;">
       <h2>Restaurant</h2>
       <p class="muted small">Manage menu items and availability.</p>
       <section class="grid-two">

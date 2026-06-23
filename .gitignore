@@ -37,10 +37,10 @@ mobile/android/.gradle/
 *.iml
 .vscode/
 play-site/.git/
-
 # ===== Logs =====
 *.log
 logs/
+
 
 # ===== Generated secrets (never commit) =====
 scripts/keystore-base64.txt

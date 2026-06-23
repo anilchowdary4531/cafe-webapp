@@ -1,3 +1,6 @@
+## 10. Final release checklist
+## 9. Test before production
+## 8. Data safety and policy declarations
 # Google Play Launch Guide for `cafe-webapp`
 
 This guide is tailored to the current repo layout:
@@ -101,9 +104,6 @@ Store these safely:
 
 - keystore file
 - alias
-- keystore password
-- key password
-
 ## 6. Configure signing for Gradle release builds
 
 Copy signing template:
@@ -130,33 +130,11 @@ Alternative (good for CI): set environment variables instead:
 - `ANDROID_KEY_PASSWORD`
 
 ## 7. Build the Android App Bundle
+- key password
 
-Sync first with the production API URL:
+## 6. Build the Android App Bundle
 
-```bash
-cd /Users/anilkumarthammineni/Downloads/cafe-webapp/mobile
-MOBILE_API_BASE_URL=https://api.your-domain.com npm run android:sync
-```
-
-Build the release bundle:
-
-```bash
-cd /Users/anilkumarthammineni/Downloads/cafe-webapp/mobile
-export JAVA_HOME=$(/usr/libexec/java_home -v 21)
-npm run android:bundle:release
-```
-
-If signing is not configured yet, Gradle still produces an unsigned bundle for testing.
-
-Optional Android Studio signing flow:
-
-- Build
-- Generate Signed Bundle / APK
-- Android App Bundle
-- Select your keystore
-- Build `release`
-
-## 8. Create the Play Console listing
+## 7. Create the Play Console listing
 
 Prepare these before submission:
 
@@ -164,18 +142,21 @@ Prepare these before submission:
 - Short description
 - Full description
 - App icon (512x512)
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 - Feature graphic (1024x500)
 - Phone screenshots
 - Support email
-- Privacy policy URL
+If signing is not configured yet, Gradle still produces an unsigned bundle for testing.
+
+Optional Android Studio signing flow:
 
 Use:
 
 - `md/mobile/PLAY_STORE_LISTING_TEMPLATE.md`
 - `privacy-policy.html`
 
-## 9. Data safety and policy declarations
-
+## 8. Data safety and policy declarations
+## 8. Create the Play Console listing
 This app likely processes:
 
 - Phone number
@@ -191,30 +172,25 @@ Review Play Console sections carefully:
 - Ads declaration
 - App access if admin/staff login is required for review
 
-## 10. Test before production
+## 9. Test before production
 
-Use Internal Testing first.
+## 9. Data safety and policy declarations
 
 Verify on a real Android phone:
 
 - Customer login and OTP flow
 - Menu loads from production backend
 - Menu images render
-- Orders can be created
 - Staff/admin logins work
 - Admin-only actions are blocked for non-admin users
-- No `localhost` API references remain in the release build
-
-## 11. Final release checklist
-
-- [ ] Production backend deployed over HTTPS
+If signing is not configured yet, do the final signed bundle generation from Android Studio:
 - [ ] `mobile/.env` points to production API
 - [ ] `npm run cap:sync` completed successfully
 - [ ] Android build opens in Android Studio
-- [ ] Signed `.aab` generated
+## 7. Create the Play Console listing
 - [ ] Privacy policy URL hosted
 - [ ] Store listing assets prepared
 - [ ] Data safety form completed
-- [ ] Internal testing passed
+## 10. Test before production
 - [ ] Production rollout submitted
 

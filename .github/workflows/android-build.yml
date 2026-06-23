@@ -1,3 +1,4 @@
+          MOBILE_API_BASE_URL: ${{ github.event.inputs.api_url || secrets.MOBILE_API_BASE_URL || 'http://localhost:4100' }}
 name: Build Android Release AAB
 
 on:
@@ -38,7 +39,6 @@ jobs:
       - name: Install mobile dependencies
         working-directory: mobile
         run: npm ci
-
       - name: Resolve mobile API URL
         run: |
           API_URL="${{ github.event.inputs.api_url || secrets.MOBILE_API_BASE_URL }}"
@@ -54,22 +54,11 @@ jobs:
           esac
           echo "MOBILE_API_BASE_URL=$API_URL" >> "$GITHUB_ENV"
 
-      - name: Sync Capacitor web assets
-        working-directory: mobile
-        run: npm run cap:sync
-        env:
-          MOBILE_API_BASE_URL: ${{ env.MOBILE_API_BASE_URL }}
 
-      - name: Write signing.properties
-        working-directory: mobile
-        run: |
-          echo "storeFile=sunset-cafe-upload-key.jks" > signing.properties
-          echo "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}" >> signing.properties
-          echo "keyAlias=sunset-cafe" >> signing.properties
           echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> signing.properties
 
       - name: Restore keystore from secret
-        working-directory: mobile
+          MOBILE_API_BASE_URL: ${{ env.MOBILE_API_BASE_URL }}
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > sunset-cafe-upload-key.jks
 
       - name: Build release AAB

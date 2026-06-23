@@ -26,23 +26,7 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable())
-        .cors(Customizer.withDefaults())
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/",
-                "/favicon.ico",
-                "/error",
-                "/health",
-                "/actuator/health",
-                "/api/menu/**",
-                "/api/auth/**",
-                "/api/menu"
-
-
-            ).permitAll().requestMatchers("/api/orders/**").authenticated()
-            .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
-            .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+        .authorizeHttpRequests(auth -> auth).permitAll()
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
     return http.build();

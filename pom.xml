@@ -16,6 +16,13 @@
   <version>0.1.0</version>
   <name>backend-spring</name>
   <description>Spring Boot OTP + JWT backend for cafe-webapp</description>
+  <repositories>
+    <repository>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </repository>
+
+  </repositories>
 
   <properties>
     <java.version>17</java.version>
@@ -23,6 +30,10 @@
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
@@ -100,11 +111,24 @@
 
   <build>
     <plugins>
+
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>3.1.5</version> <!-- Use your Spring Boot version -->
+        <configuration>
+          <mainClass>com.cafe.CafeBackendApplication</mainClass>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
+
 </project>
 

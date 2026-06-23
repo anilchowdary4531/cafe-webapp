@@ -91,11 +91,9 @@ After deployment:
 curl -I https://YOUR_USERNAME.github.io/cafe-webapp/
 
 # Separate sunset-cafe-site repo
-curl -I https://YOUR_USERNAME.github.io/sunset-cafe-site/
-
-# Either chosen URL should return 200 OK
 ```
 
+# Either chosen URL should return 200 OK
 ---
 
 ## Mobile App - Google Play Store
@@ -103,7 +101,7 @@ curl -I https://YOUR_USERNAME.github.io/sunset-cafe-site/
 ### Overview
 - **Location:** `/mobile`
 - **Build System:** Capacitor + Android Gradle
-- **Signing:** Keystore (JKS)
+# Should return 200 OK
 - **CI/CD:** GitHub Actions (`.github/workflows/android-build.yml`)
 
 ### Prerequisites
@@ -117,9 +115,9 @@ curl -I https://YOUR_USERNAME.github.io/sunset-cafe-site/
    ```
 
 2. **GitHub Actions Secrets**
-   
+
    Add these to your GitHub repo (Settings → Secrets and variables → Actions):
-   
+
    | Secret | Value | Example |
    |--------|-------|---------|
    | `ANDROID_STORE_PASSWORD` | Keystore password | `your-secure-password` |
@@ -209,8 +207,8 @@ Expected review time: 24-48 hours
    - Note connection details
 
 3. **GitHub Actions Secrets**
-   
-   | Secret | Value | 
+
+   | Secret | Value |
    |--------|-------|
    | `DATABASE_URL` | `jdbc:postgresql://host:port/cafe_webapp` |
    | `DB_USERNAME` | PostgreSQL user |
@@ -339,7 +337,7 @@ ls -la play-site/
 
 **Issue:** "Release builds cannot use localhost"
 
-**Solution:** 
+**Solution:**
 ```bash
 # Set production API URL
 ./scripts/rebuild-apk.sh https://YOUR_API_URL.com
